@@ -38,7 +38,7 @@ Java 建议：
 
 ### 第二阶段
 
-- MyBatis Framework
+- Spring Data JPA
 - MySQL Driver
 
 ### 第三阶段
@@ -67,7 +67,7 @@ src/main/java/com/zyoutube
 feature/account
   AccountController.java
   AccountService.java
-  AccountMapper.java
+  AccountRepository.java
   dto/
   entity/
   vo/
@@ -164,7 +164,7 @@ common/exception
 - `@RestControllerAdvice`
 - Spring Boot 的异常处理入口
 
-## Sprint 3: 接入 MySQL 与 MyBatis
+## Sprint 3: 接入 MySQL 与 JPA
 
 目标：
 
@@ -175,14 +175,15 @@ common/exception
 - 本地启动 MySQL
 - 配置数据源
 - 创建 `account` 表
-- 为 `account` 编写 MyBatis Mapper
+- 为 `account` 编写 JPA Entity 和 Repository
 - 把账号模块改成真实 CRUD
 
 建议优先学习：
 
 - `application.yml` 数据源配置
-- Mapper 接口
-- XML SQL 映射
+- `@Entity`
+- `JpaRepository`
+- 简单查询方法命名
 - 基本增删改查
 
 完成标准：
@@ -192,7 +193,7 @@ common/exception
 你会学到：
 
 - Spring Boot 如何集成数据库
-- MyBatis 的基本工作方式
+- JPA 的基本工作方式
 - DTO、Entity、VO 的职责区别
 
 ## Sprint 4: 完成 Account 模块
@@ -375,7 +376,7 @@ feature/account
 2. Web 分层
 3. 参数校验
 4. 统一返回与全局异常
-5. 数据库与 MyBatis
+5. 数据库与 JPA
 6. Account 模块
 7. Video 模块
 8. Comment 模块
@@ -408,7 +409,7 @@ feature/account
 - 你知道请求如何流到 Controller 和 Service
 - 你会写 DTO 并做参数校验
 - 你会做统一响应和全局异常处理
-- 你会把假数据替换成 MyBatis + MySQL
+- 你会把假数据替换成 JPA + MySQL
 - 你能解释为什么 Security 应该后加
 
 ## 最后建议
@@ -419,7 +420,7 @@ feature/account
 
 - Sprint 3A: 接数据源
 - Sprint 3B: 建表
-- Sprint 3C: 接 Mapper
+- Sprint 3C: 接 Repository
 - Sprint 3D: 改造 account CRUD
 
 这也是正常的。学习型项目最重要的是每一步都知道自己正在掌握什么。
