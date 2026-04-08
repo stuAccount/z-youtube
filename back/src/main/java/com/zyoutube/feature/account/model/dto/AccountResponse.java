@@ -1,10 +1,10 @@
-package com.zyoutube.feature.account.dto;
+package com.zyoutube.feature.account.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter @AllArgsConstructor
+@Getter @AllArgsConstructor
 public class AccountResponse {
     private Long id;
     private String username;

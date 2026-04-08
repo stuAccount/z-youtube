@@ -1,7 +1,6 @@
-package com.zyoutube.feature.account;
+package com.zyoutube.feature.account.model.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import lombok.*;
 
 @Entity

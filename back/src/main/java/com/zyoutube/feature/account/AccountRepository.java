@@ -1,5 +1,6 @@
 package com.zyoutube.feature.account;
 
+import com.zyoutube.feature.account.model.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

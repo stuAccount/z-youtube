@@ -1,22 +1,20 @@
-package com.zyoutube.feature.account.dto;
+package com.zyoutube.feature.account.model.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-public class CreateAccountRequest {
+@Getter @Setter
+public class UpdateAccountRequest {
     @NotBlank
-    @Getter @Setter
     private String username;
 
-    @Getter @Setter
-    @Email
     @NotBlank
+    @Email
     private String email;
 
-    @NotBlank
-    @Getter @Setter
-    private String password;
-
+    /* TODO:
+     * Modifying password not implemented here but a seperate dto?
+     */
 }
