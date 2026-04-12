@@ -6,6 +6,7 @@ import com.zyoutube.feature.account.model.dto.UpdateAccountRequest;
 import com.zyoutube.feature.account.model.entity.Account;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountService {
@@ -23,8 +24,7 @@ public class AccountService {
         account.setUsername(req.getUsername());
         account.setEmail(req.getEmail());
         account.setPasswordHash("hashed_" + req.getPassword());
-        Account saved = accountRepository.save(account);
-        return new AccountResponse(saved.getId(), saved.getUsername(), saved.getEmail());
+        return new AccountResponse(account.getId(), account.getUsername(), account.getEmail());
     }
 
     public AccountResponse deleteById(Long id) {
@@ -40,6 +40,7 @@ public class AccountService {
         return new AccountResponse(account.getId(), account.getUsername(), account.getEmail());
     }
 
+    @Transactional
     public AccountResponse update(Long id, @Valid UpdateAccountRequest req) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
@@ -50,7 +51,7 @@ public class AccountService {
 
         account.setUsername(req.getUsername());
         account.setEmail(req.getEmail());
-        Account updated = accountRepository.save(account);
-        return new AccountResponse(updated.getId(), updated.getUsername(), updated.getEmail());
+        // Account updated = accountRepository.save(account);
+        return new AccountResponse(account.getId(), account.getUsername(), account.getEmail());
     }
 }
