@@ -43,8 +43,14 @@ public class AccountService {
     public AccountResponse update(Long id, @Valid UpdateAccountRequest req) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
+
+        if(accountRepository.existsByEmailAndIdNot(req.getEmail(), id)) {
+            throw new IllegalArgumentException("email already been used");
+        }
+
         account.setUsername(req.getUsername());
         account.setEmail(req.getEmail());
-        return new AccountResponse(account.getId(), account.getUsername(), account.getEmail());
+        Account updated = accountRepository.save(account);
+        return new AccountResponse(updated.getId(), updated.getUsername(), updated.getEmail());
     }
 }
