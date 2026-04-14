@@ -1,9 +1,10 @@
 package com.zyoutube.feature.account;
 
-import com.zyoutube.feature.account.model.dto.AccountResponse;
-import com.zyoutube.feature.account.model.dto.CreateAccountRequest;
+import com.zyoutube.feature.account.model.vo.AccountResponse;
+import com.zyoutube.feature.account.model.dto.RegisterAccountRequest;
 import com.zyoutube.feature.account.model.dto.UpdateAccountRequest;
 import com.zyoutube.feature.account.model.entity.Account;
+import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,12 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final EntityManager entityManager;
 
-    public AccountService(AccountRepository accountRepository){
+    public AccountService(AccountRepository accountRepository, EntityManager entityManager){
         this.accountRepository = accountRepository;
+        this.entityManager = entityManager;
     }
 
-    public AccountResponse create(CreateAccountRequest req) {
+    @Transactional
+    public AccountResponse create(RegisterAccountRequest req) {
         if(accountRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("email already exists");
         }
@@ -24,6 +28,7 @@ public class AccountService {
         account.setUsername(req.getUsername());
         account.setEmail(req.getEmail());
         account.setPasswordHash("hashed_" + req.getPassword());
+        entityManager.persist(account);
         return new AccountResponse(account.getId(), account.getUsername(), account.getEmail());
     }
 
@@ -51,7 +56,6 @@ public class AccountService {
 
         account.setUsername(req.getUsername());
         account.setEmail(req.getEmail());
-        // Account updated = accountRepository.save(account);
         return new AccountResponse(account.getId(), account.getUsername(), account.getEmail());
     }
 }

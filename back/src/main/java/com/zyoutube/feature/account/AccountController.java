@@ -1,8 +1,8 @@
 package com.zyoutube.feature.account;
 
 import com.zyoutube.common.api.ApiResponse;
-import com.zyoutube.feature.account.model.dto.CreateAccountRequest;
-import com.zyoutube.feature.account.model.dto.AccountResponse;
+import com.zyoutube.feature.account.model.dto.RegisterAccountRequest;
+import com.zyoutube.feature.account.model.vo.AccountResponse;
 import com.zyoutube.feature.account.model.dto.UpdateAccountRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -16,19 +16,23 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    @PostMapping
-    public ApiResponse<AccountResponse> create(@Valid @RequestBody CreateAccountRequest req) {
+    @PostMapping("register")
+    public ApiResponse<AccountResponse> create(@Valid @RequestBody RegisterAccountRequest req) {
         return ApiResponse.ok(accountService.create(req));
-    }
-
-    @DeleteMapping("{id}")
-    public ApiResponse<AccountResponse> deleteById(@PathVariable Long id) {
-        return ApiResponse.ok(accountService.deleteById(id));
     }
 
     @GetMapping("{id}")
     public ApiResponse<AccountResponse> getById(@PathVariable Long id) {
         return ApiResponse.ok(accountService.getById(id));
+    }
+
+    @PatchMapping("{id}/profile")
+    public
+
+
+    @DeleteMapping("{id}")
+    public ApiResponse<AccountResponse> deleteById(@PathVariable Long id) {
+        return ApiResponse.ok(accountService.deleteById(id));
     }
 
     @PutMapping("{id}")
