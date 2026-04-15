@@ -1,9 +1,10 @@
 package com.zyoutube.feature.account;
 
 import com.zyoutube.common.api.ApiResponse;
+import com.zyoutube.feature.account.model.dto.ChangePasswordRequest;
 import com.zyoutube.feature.account.model.dto.RegisterAccountRequest;
 import com.zyoutube.feature.account.model.vo.AccountResponse;
-import com.zyoutube.feature.account.model.dto.UpdateAccountRequest;
+import com.zyoutube.feature.account.model.dto.UpdateProfileRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,29 +18,32 @@ public class AccountController {
     }
 
     @PostMapping("register")
-    public ApiResponse<AccountResponse> create(@Valid @RequestBody RegisterAccountRequest req) {
-        return ApiResponse.ok(accountService.create(req));
+    public ApiResponse<AccountResponse> register(@Valid @RequestBody RegisterAccountRequest req) {
+        return ApiResponse.ok(accountService.register(req));
     }
 
     @GetMapping("{id}")
-    public ApiResponse<AccountResponse> getById(@PathVariable Long id) {
+    public ApiResponse<AccountResponse> getProfile(@PathVariable Long id) {
         return ApiResponse.ok(accountService.getById(id));
     }
 
     @PatchMapping("{id}/profile")
-    public
+    public ApiResponse<AccountResponse> updateProfile(@PathVariable Long id,
+                                               @Valid @RequestBody UpdateProfileRequest req) {
+        return ApiResponse.ok(accountService.updateProfile(id, req));
+    }
 
+    @PatchMapping("{id}/password")
+    public ApiResponse<AccountResponse> changePassword(@PathVariable Long id,
+                                                       @Valid @RequestBody ChangePasswordRequest req) {
+        return ApiResponse.ok(accountService.changePassword(id, req));
+    }
 
     @DeleteMapping("{id}")
-    public ApiResponse<AccountResponse> deleteById(@PathVariable Long id) {
+    public ApiResponse<AccountResponse> withdraw(@PathVariable Long id) {
         return ApiResponse.ok(accountService.deleteById(id));
     }
 
-    @PutMapping("{id}")
-    public ApiResponse<AccountResponse> update(@PathVariable Long id,
-                                  @Valid @RequestBody UpdateAccountRequest req) {
-        return ApiResponse.ok(accountService.update(id, req));
-    }
 
 
 }

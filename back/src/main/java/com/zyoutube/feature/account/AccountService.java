@@ -2,10 +2,11 @@ package com.zyoutube.feature.account;
 
 import com.zyoutube.feature.account.model.vo.AccountResponse;
 import com.zyoutube.feature.account.model.dto.RegisterAccountRequest;
-import com.zyoutube.feature.account.model.dto.UpdateAccountRequest;
+import com.zyoutube.feature.account.model.dto.UpdateProfileRequest;
 import com.zyoutube.feature.account.model.entity.Account;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,21 +14,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountService {
     private final AccountRepository accountRepository;
     private final EntityManager entityManager;
+    private final PasswordEncoder passwordEncoder;
 
-    public AccountService(AccountRepository accountRepository, EntityManager entityManager){
+    public AccountService(AccountRepository accountRepository,
+                          EntityManager entityManager,
+                          PasswordEncoder passwordEncoder){
         this.accountRepository = accountRepository;
         this.entityManager = entityManager;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
-    public AccountResponse create(RegisterAccountRequest req) {
+    public AccountResponse register(RegisterAccountRequest req) {
         if(accountRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("email already exists");
         }
         Account account = new Account();
-        account.setUsername(req.getUsername());
-        account.setEmail(req.getEmail());
-        account.setPasswordHash("hashed_" + req.getPassword());
+        account.renameUsername(req.getUsername());
+        account.changeEmail(req.getEmail());
+        account.updatePassword(passwordEncoder.encode(req.getPassword()));
         entityManager.persist(account);
         return new AccountResponse(account.getId(), account.getUsername(), account.getEmail());
     }
@@ -46,7 +51,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountResponse update(Long id, @Valid UpdateAccountRequest req) {
+    public AccountResponse updateProfile(Long id, @Valid UpdateProfileRequest req) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
 
@@ -54,8 +59,8 @@ public class AccountService {
             throw new IllegalArgumentException("email already been used");
         }
 
-        account.setUsername(req.getUsername());
-        account.setEmail(req.getEmail());
+        account.renameUsername(req.getUsername());
+        account.changeEmail(req.getEmail());
         return new AccountResponse(account.getId(), account.getUsername(), account.getEmail());
     }
 }

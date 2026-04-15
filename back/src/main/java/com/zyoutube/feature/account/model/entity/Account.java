@@ -25,12 +25,15 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter(AccessLevel.NONE)
     @Column(nullable = false, length = 50)
     private String username;
 
+    @Setter(AccessLevel.NONE)
     @Column(nullable = false, length = 100)
     private String email;
 
+    @Setter(AccessLevel.NONE)
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -55,6 +58,18 @@ public class Account {
     @Setter(AccessLevel.NONE)
     private LocalDateTime updatedAt;
 
+    public void changeEmail(String newEmail)  {
+        this.email = newEmail;
+    }
+
+    public void updatePassword(String hashedPassword)  {
+        this.passwordHash = hashedPassword;
+    }
+
+    public void renameUsername(String newUsername) {
+        this.username = newUsername;
+    }
+
     public boolean isDeleted() {
         return deletedAt != null;
     }
@@ -72,6 +87,10 @@ public class Account {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+
+        if (this.nickname == null || this.nickname.isBlank()) {
+            setNickname(this.username);
+        }
     }
 
     @PreUpdate

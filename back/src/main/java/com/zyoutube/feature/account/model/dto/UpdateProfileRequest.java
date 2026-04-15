@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter
-public class UpdateAccountRequest {
+public class UpdateProfileRequest {
     @NotBlank
     private String username;
 
@@ -14,7 +14,10 @@ public class UpdateAccountRequest {
     @Email
     private String email;
 
-    /* TODO:
-     * Modifying password not implemented here but a seperate dto?
-     */
+    private String nickname;
+
+    private String bio;
+
+    private String avatarUrl;
+
 }
