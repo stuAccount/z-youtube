@@ -41,7 +41,7 @@ public class Account {
     private String nickname;
 
     @Column(name = "avatar_url", length = 500)
-    private String avatarURL;
+    private String avatarUrl;
 
     @Column(length = 500)
     private String bio;
