@@ -12,6 +12,11 @@ public class GlobalExceptionHandler {
         return ApiResponse.fail(e.getMessage());
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ApiResponse<Void> handleIllegalState(IllegalStateException e) {
+        return ApiResponse.fail(e.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ApiResponse<Void> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult()
