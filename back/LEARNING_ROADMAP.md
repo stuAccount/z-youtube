@@ -314,6 +314,57 @@ feature/account
 - 分页接口设计
 - 删除权限的业务判断
 
+当前这一轮可以先这样落地 `comment` scaffold：
+
+```text
+feature/comment
+  CommentController.java
+  CommentService.java
+  CommentRepository.java
+  model/
+    dto/
+      CreateCommentRequest.java
+    entity/
+      Comment.java
+    vo/
+      CommentDetailResponse.java
+      CommentSummaryResponse.java
+```
+
+建议先把骨架搭好，再把关键业务逻辑手打进去。
+
+可以先固定 3 个接口：
+
+- `POST /comments`
+- `GET /comments?videoId=1&page=0&size=10`
+- `DELETE /comments/{id}?requesterAccountId=1`
+
+建议你手打的关键部分：
+
+- `Comment` 实体里的 `video` 和 `author` 关联，重点看两个 `@ManyToOne`
+- `CommentRepository` 里的分页查询方法，例如 `findAllByVideo_Id(...)`
+- `CommentService.createComment(...)` 里如何同时关联 `Account` 和 `Video`
+- `CommentService.getComments(...)` 里如何做 `Page<Comment>` 到 `Page<CommentSummaryResponse>` 的映射
+- `CommentService.deleteComment(...)` 里如何校验“当前操作人是不是评论作者本人”
+
+建议你保留为 TODO、自己完成的地方：
+
+- `createComment()`
+- `getComments()`
+- `deleteComment()`
+
+可以沿用前两个 sprint 的写法，不必把时间花在重复部分：
+
+- 参数校验继续沿用 DTO + `@Valid`
+- 成功/失败返回继续沿用统一 `ApiResponse`
+- 删除先做硬删除，Sprint 7 再接入登录用户
+
+你在这一 sprint 里最应该形成的感觉是：
+
+- `comment` 不只是一个独立表，而是同时挂在 `video` 和 `account` 下面
+- 查询评论列表时，重点不再是“查一条”，而是“按 `video_id` + 分页”
+- 删除评论时，重点是“归属判断”，不是单纯 `deleteById`
+
 ## Sprint 7: Security 登录与鉴权
 
 目标：
