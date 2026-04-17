@@ -93,32 +93,43 @@ public class VideoService {
 
     public Page<VideoSummaryResponse> getVideos(Long authorId, VideoStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(
-                Math.max(page, 0),
-                Math.max(size, 1),
+                Math.max(0, page),
+                Math.max(1, size),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        /*
-         * Sprint 5 hand-typing target:
-         * - no filter: videoRepository.findAll(pageable)
-         * - only authorId: videoRepository.findAllByAuthor_Id(authorId, pageable)
-         * - only status: videoRepository.findAllByStatus(status, pageable)
-         * - both: videoRepository.findAllByAuthor_IdAndStatus(authorId, status, pageable)
-         * Then map Page<Video> -> Page<VideoSummaryResponse>.
-         */
-        throw new UnsupportedOperationException("TODO Sprint 5: implement list query, filters, and pagination");
+        Page<Video> videoPage;
+
+        if (authorId != null && status != null) {
+            videoPage = videoRepository.findAllByAuthor_IdAndStatus(authorId, status, pageable);
+        } else if (authorId != null) {
+            videoPage = videoRepository.findAllByAuthor_Id(authorId, pageable);
+        } else if (status != null) {
+            videoPage = videoRepository.findAllByStatus(status, pageable);
+        } else {
+            videoPage = videoRepository.findAll(pageable);
+        }
+
+        return videoPage.map(video -> new VideoSummaryResponse(
+                video.getId(),
+                video.getTitle(),
+                video.getStatus(),
+                createAccountSummary(video.getAuthor()),
+                video.getCreatedAt()
+        ));
     }
 
     @Transactional
     public void deleteVideo(Long id, Long requesterAccountId) {
+        Account account = accountRepository.findById(requesterAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+        if (account.isDeleted()) {
+            throw new IllegalStateException("Withdrawn account can not delete videos");
+        }
 
+        Video video = videoRepository.findByIdAndAuthor_Id(id, requesterAccountId)
+                        .orElseThrow(() -> new IllegalArgumentException("Video not found"));
 
-        /*
-         * Sprint 5 hand-typing target:
-         * 1. find the video owned by requesterAccountId
-         * 2. if not found, decide whether it means "video not found" or "no permission"
-         * 3. hard delete for now; Sprint 7 can replace requesterAccountId with the logged-in user
-         */
-        throw new UnsupportedOperationException("TODO Sprint 5: delete video with ownership check");
+        videoRepository.delete(video);
     }
 }
