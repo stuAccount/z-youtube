@@ -264,6 +264,28 @@ feature/account
 - 条件筛选
 - 基础分页
 
+建议你手打的关键部分：
+
+- `Video` 实体里的 `author` 关联，重点看 `@ManyToOne`、`@JoinColumn(name = "author_id")`
+- `VideoStatus` 这样的业务枚举，以及 `@Enumerated(EnumType.STRING)`
+- `GET /videos` 的查询参数设计，例如 `authorId`、`status`、`page`、`size`
+- `VideoRepository` 里的分页查询方法，例如 `findAllByAuthor_Id(...)`
+- `VideoService` 里根据不同筛选条件决定走哪一个 Repository 方法
+- `Page<Video>` 如何映射成 `Page<VideoSummaryResponse>`
+
+这一 sprint 尽量不要重复 Sprint 4 的重点：
+
+- 不要把主要精力又放回“注册/改资料/改密码”这种 account 里的业务规则
+- 参数校验、统一返回、全局异常可以沿用已有写法，不必再把时间主要花在这里
+
+可以串联起 `account` 和 `video` 的部分：
+
+- 发布视频时先用 `AccountRepository.findById(authorId)` 确认作者存在
+- 在 `Video` 中保存 `Account author`，让数据库落成 `author_id`
+- 在视频详情和列表响应里复用账号摘要信息，例如作者 `id / username / nickname / avatarUrl`
+- 删除视频时先校验“当前操作人是不是作者本人”，现在可以先用 `requesterAccountId` 模拟，Sprint 7 再替换成登录用户
+- 你会开始感觉到：`account` 不再只是独立 CRUD，而是其他业务的身份来源
+
 ## Sprint 6: Comment 模块
 
 目标：
