@@ -7,6 +7,9 @@ import com.zyoutube.feature.comment.model.dto.CreateCommentRequest;
 import com.zyoutube.feature.comment.model.vo.CommentDetailResponse;
 import com.zyoutube.feature.comment.model.vo.CommentSummaryResponse;
 import com.zyoutube.feature.video.VideoRepository;
+import com.zyoutube.feature.video.model.entity.Video;
+import com.zyoutube.feature.video.model.type.VideoStatus;
+import com.zyoutube.feature.comment.model.entity.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,15 +42,34 @@ public class CommentService {
 
     @Transactional
     public CommentDetailResponse createComment(CreateCommentRequest req) {
-        /*
-         * Sprint 6 hand-typing target:
-         * 1. find the author by req.getAuthorId()
-         * 2. find the target video by req.getVideoId()
-         * 3. block withdrawn accounts from commenting
-         * 4. decide whether non-published videos can receive comments in Sprint 6
-         * 5. create/save Comment and return CommentDetailResponse
-         */
-        throw new UnsupportedOperationException("TODO Sprint 6: create comment with account/video association");
+        Account author = accountRepository.findById(req.getAuthorId())
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+        Video video = videoRepository.findById(req.getVideoId())
+                .orElseThrow(() -> new IllegalArgumentException("Video not found"));
+
+        if (author.isDeleted()) {
+            throw new IllegalStateException("Withdrawn account cannot comment");
+        }
+
+        if (video.getStatus() != VideoStatus.PUBLISHED) {
+            throw new IllegalArgumentException("Video is private");
+        }
+
+        Comment comment = new Comment();
+        comment.assignVideo(video);
+        comment.assignAuthor(author);
+        comment.changeContent(req.getContent());
+        commentRepository.save(comment);
+
+        return new CommentDetailResponse(
+                comment.getId(),
+                comment.getVideo().getId(),
+                comment.getContent(),
+                createAccountSummary(author),
+                comment.getCreatedAt()
+        );
+
     }
 
     @Transactional(readOnly = true)
@@ -55,28 +77,32 @@ public class CommentService {
         Pageable pageable = PageRequest.of(
                 Math.max(0, page),
                 Math.max(1, size),
-                Sort.by(Sort.Direction.ASC, "createdAt")
+                Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        /*
-         * Sprint 6 hand-typing target:
-         * - maybe verify the video exists first
-         * - query with commentRepository.findAllByVideo_Id(videoId, pageable)
-         * - map Page<Comment> -> Page<CommentSummaryResponse>
-         * - think about whether comment order should be ASC or DESC
-         */
-        throw new UnsupportedOperationException("TODO Sprint 6: implement comment list pagination by video");
+        Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> new IllegalArgumentException("Video not found"));
+
+        Page<Comment> commentPage = commentRepository.findAllByVideo_Id(videoId, pageable);
+
+        return commentPage.map(comment -> new CommentSummaryResponse(
+                comment.getId(),
+                comment.getContent(),
+                createAccountSummary(comment.getAuthor()),
+                comment.getCreatedAt()
+        ));
     }
 
     @Transactional
     public void deleteComment(Long id, Long requesterAccountId) {
-        /*
-         * Sprint 6 hand-typing target:
-         * 1. find the requester account
-         * 2. decide how withdrawn accounts should behave here
-         * 3. find the comment owned by requesterAccountId
-         * 4. hard delete for now; Sprint 7 can replace requesterAccountId with login user
-         */
-        throw new UnsupportedOperationException("TODO Sprint 6: delete comment with ownership check");
+        Account account = accountRepository.findById(requesterAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+        if (account.isDeleted()) {
+            throw new IllegalStateException("Withdrawn account can not delete comments");
+        }
+        Comment comment = commentRepository.findByIdAndAuthor_Id(id, requesterAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+
+        commentRepository.delete(comment);
     }
 }

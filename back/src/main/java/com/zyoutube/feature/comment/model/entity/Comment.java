@@ -45,7 +45,6 @@ public class Comment {
     @Column(nullable = false, length = 1000)
     private String content;
 
-    // Sprint 6 study point: Comment is on the "many" side for both video and author.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "video_id", nullable = false, foreignKey = @ForeignKey(name = "fk_comments_video"))
     private Video video;
