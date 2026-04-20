@@ -23,7 +23,7 @@ public class AccountController {
         return ApiResponse.success(accountService.register(req));
     }
 
-    
+
     @GetMapping("{id}")
     public ApiResponse<SelfProfileResponse> getSelfProfile(@PathVariable Long id) {
         return ApiResponse.success(accountService.getSelfProfile(id));
@@ -32,7 +32,7 @@ public class AccountController {
     @GetMapping("profile/{username}")
     public ApiResponse<PublicProfileResponse> getPublicProfile(@PathVariable String username) {
         return ApiResponse.success(accountService.getPublicProfile(username));
-    }   
+    }
 
 
     @PatchMapping("{id}/profile")

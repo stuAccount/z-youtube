@@ -9,9 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreateVideoRequest {
-    @NotNull(message = "Author id is required before Sprint 7 login is added")
-    private Long authorId;
-
     @NotBlank(message = "Title can not be blank")
     @Size(max = 100, message = "Title must be at most 100 characters")
     private String title;
