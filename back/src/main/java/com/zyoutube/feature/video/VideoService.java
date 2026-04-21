@@ -9,7 +9,6 @@ import com.zyoutube.feature.video.model.entity.Video;
 import com.zyoutube.feature.video.model.type.VideoStatus;
 import com.zyoutube.feature.video.model.vo.VideoDetailResponse;
 import com.zyoutube.feature.video.model.vo.VideoSummaryResponse;
-import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +24,7 @@ public class VideoService {
 
     public VideoService(VideoRepository videoRepository,
                         AccountRepository accountRepository,
-                        EntityManager entityManager, CurrentUserProvider currentUserProvider) {
+                        CurrentUserProvider currentUserProvider) {
         this.videoRepository = videoRepository;
         this.accountRepository = accountRepository;
         this.currentUserProvider = currentUserProvider;
@@ -40,14 +39,35 @@ public class VideoService {
         );
     }
 
+    private VideoDetailResponse createVideoDetailResponse(Video video) {
+        return new VideoDetailResponse(
+                video.getId(),
+                video.getTitle(),
+                video.getDescription(),
+                video.getStatus(),
+                createAccountSummary(video.getAuthor()),
+                video.getCreatedAt()
+        );
+    }
+
+    private Video getOwnedVideo(Long videoId) {
+        return videoRepository.findByIdAndAuthor_Id(videoId, currentUserProvider.getCurrentAccountId())
+                .orElseThrow(() -> new IllegalArgumentException("Video not found"));
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+
+        String trimmedKeyword = keyword.trim();
+        return trimmedKeyword.isEmpty() ? null : trimmedKeyword;
+    }
+
     @Transactional
     public VideoDetailResponse createVideo(CreateVideoRequest req) {
         Account author = accountRepository.findById(currentUserProvider.getCurrentAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
-
-        if (author.isDeleted()) {
-            throw new IllegalStateException("Withdrawn account can not create videos");
-        }
 
         Video video = new Video();
         video.assignAuthor(author);
@@ -56,58 +76,54 @@ public class VideoService {
         video.changeStatus(VideoStatus.DRAFT);
 
         Video savedVideo = videoRepository.save(video);
+        return createVideoDetailResponse(savedVideo);
+    }
 
-        AccountSummaryResponse authorSummary = createAccountSummary(author);
+    @Transactional
+    public VideoDetailResponse updateVideo(Long videoId, CreateVideoRequest req) {
+        Video video = getOwnedVideo(videoId);
 
-        return new VideoDetailResponse(
-                savedVideo.getId(),
-                savedVideo.getTitle(),
-                savedVideo.getDescription(),
-                savedVideo.getStatus(),
-                authorSummary,
-                savedVideo.getCreatedAt()
-        );
+        video.changeTitle(req.getTitle().trim());
+        video.changeDescription(req.getDescription().trim());
+
+        return createVideoDetailResponse(video);
+    }
+
+    @Transactional
+    public VideoDetailResponse publishVideo(Long videoId) {
+        Video video = getOwnedVideo(videoId);
+        video.changeStatus(VideoStatus.PUBLISHED);
+
+        return createVideoDetailResponse(video);
     }
 
     @Transactional(readOnly = true)
-    public VideoDetailResponse getDetail(Long id) {
-        Video video = videoRepository.findById(id)
+    public VideoDetailResponse getDetail(Long videoId) {
+        Video video = videoRepository.findById(videoId)
                 .orElseThrow(() -> new IllegalArgumentException("Video not found"));
 
         if (video.getStatus() != VideoStatus.PUBLISHED) {
             throw new IllegalStateException("Video is private");
         }
 
-        AccountSummaryResponse authorSummary = createAccountSummary(video.getAuthor());
-
-        return new VideoDetailResponse(
-                video.getId(),
-                video.getTitle(),
-                video.getDescription(),
-                video.getStatus(),
-                authorSummary,
-                video.getCreatedAt()
-        );
+        return createVideoDetailResponse(video);
     }
 
-    public Page<VideoSummaryResponse> getVideos(Long authorId, VideoStatus status, int page, int size) {
+    @Transactional(readOnly = true)
+    public Page<VideoSummaryResponse> getVideos(Long authorId, VideoStatus status, String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(
                 Math.max(0, page),
                 Math.max(1, size),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<Video> videoPage;
-
-        if (authorId != null && status != null) {
-            videoPage = videoRepository.findAllByAuthor_IdAndStatus(authorId, status, pageable);
-        } else if (authorId != null) {
-            videoPage = videoRepository.findAllByAuthor_Id(authorId, pageable);
-        } else if (status != null) {
-            videoPage = videoRepository.findAllByStatus(status, pageable);
-        } else {
-            videoPage = videoRepository.findAll(pageable);
+        VideoStatus visibleStatus = VideoStatus.PUBLISHED;
+        if (status != null && status != VideoStatus.PUBLISHED) {
+            throw new IllegalArgumentException("Only published videos can be searched");
         }
+
+        String normalizedKeyword = normalizeKeyword(keyword);
+        Page<Video> videoPage = videoRepository.searchVisibleVideos(authorId, visibleStatus, normalizedKeyword, pageable);
 
         return videoPage.map(video -> new VideoSummaryResponse(
                 video.getId(),
@@ -119,16 +135,8 @@ public class VideoService {
     }
 
     @Transactional
-    public void deleteVideo(Long requesterAccountId) {
-        Account account = accountRepository.findById(requesterAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
-        if (account.isDeleted()) {
-            throw new IllegalStateException("Withdrawn account can not delete videos");
-        }
-
-        Video video = videoRepository.findByIdAndAuthor_Id(currentUserProvider.getCurrentAccountId(), requesterAccountId)
-                        .orElseThrow(() -> new IllegalArgumentException("Video not found"));
-
+    public void deleteVideo(Long videoId) {
+        Video video = getOwnedVideo(videoId);
         videoRepository.delete(video);
     }
 }
