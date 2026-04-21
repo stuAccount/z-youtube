@@ -6,6 +6,7 @@ import com.zyoutube.feature.account.model.vo.SelfProfileResponse;
 import com.zyoutube.feature.account.model.dto.RegisterAccountRequest;
 import com.zyoutube.feature.account.model.dto.UpdateProfileRequest;
 import com.zyoutube.feature.account.model.entity.Account;
+import com.zyoutube.feature.auth.context.CurrentUserProvider;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,13 +18,14 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final EntityManager entityManager;
     private final PasswordEncoder passwordEncoder;
+    private final CurrentUserProvider currentUserProvider;
 
-    public AccountService(AccountRepository accountRepository,
-                          EntityManager entityManager,
-                          PasswordEncoder passwordEncoder){
+    public AccountService(AccountRepository accountRepository, EntityManager entityManager, PasswordEncoder passwordEncoder,
+            CurrentUserProvider currentUserProvider) {
         this.accountRepository = accountRepository;
         this.entityManager = entityManager;
         this.passwordEncoder = passwordEncoder;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @Transactional
@@ -43,8 +45,10 @@ public class AccountService {
                 account.getNickname(), account.getBio(), account.getAvatarUrl());
     }
 
-    public void withdraw(Long id) {
-        Account account = accountRepository.findById(id)
+    
+    @Transactional
+    public void withdraw() {
+        Account account = accountRepository.findById(currentUserProvider.getCurrentAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
 
         if (account.isDeleted()) {
@@ -53,8 +57,8 @@ public class AccountService {
         account.softDelete();
     }
 
-    public SelfProfileResponse getSelfProfile(Long id) {
-        Account account = accountRepository.findById(id)
+    public SelfProfileResponse getSelfProfile() {
+        Account account = accountRepository.findById(currentUserProvider.getCurrentAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
         return new SelfProfileResponse(account.getId(), account.getUsername(), account.getEmail(),
                 account.getNickname(), account.getBio(), account.getAvatarUrl());
@@ -68,7 +72,8 @@ public class AccountService {
     }
 
     @Transactional
-    public SelfProfileResponse updateProfile(Long id, @Valid UpdateProfileRequest req) {
+    public SelfProfileResponse updateProfile(@Valid UpdateProfileRequest req) {
+        Long id = currentUserProvider.getCurrentAccountId();
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
 
@@ -93,7 +98,8 @@ public class AccountService {
     }
 
     @Transactional
-    public void changePassword(Long id, @Valid ChangePasswordRequest req) {
+    public void changePassword(@Valid ChangePasswordRequest req) {
+        Long id = currentUserProvider.getCurrentAccountId();
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
 
@@ -101,7 +107,7 @@ public class AccountService {
             throw new IllegalArgumentException("Old Password is incorrect");
         }
 
-        if (!passwordEncoder.matches(req.getNewPassword(), req.getConfirmPassword())) {
+        if (!req.getNewPassword().equals(req.getConfirmPassword())) {
             throw new IllegalArgumentException("The new passwords do not match");
         }
 

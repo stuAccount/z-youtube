@@ -43,10 +43,9 @@ public class VideoController {
         return ApiResponse.success(videoService.getVideos(authorId, status, page, size));
     }
 
-    @DeleteMapping("{id}")
-    public ApiResponse<Void> deleteVideo(@PathVariable Long id,
-                                    @RequestParam Long requesterAccountId) {
-        videoService.deleteVideo(id, requesterAccountId);
+    @DeleteMapping
+    public ApiResponse<Void> deleteVideo(@RequestParam Long requesterAccountId) {
+        videoService.deleteVideo(requesterAccountId);
         return ApiResponse.success(null);
     }
 }

@@ -1,7 +1,10 @@
 package com.zyoutube.feature.auth.model.vo;
 
-/**
- * TODO Sprint 7: current authenticated account response payload.
- */
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
 public class CurrentAccountResponse {
+    private Long id;
 }

@@ -3,6 +3,7 @@ package com.zyoutube.feature.comment;
 import com.zyoutube.feature.account.AccountRepository;
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.account.model.vo.AccountSummaryResponse;
+import com.zyoutube.feature.auth.context.CurrentUserProvider;
 import com.zyoutube.feature.comment.model.dto.CreateCommentRequest;
 import com.zyoutube.feature.comment.model.vo.CommentDetailResponse;
 import com.zyoutube.feature.comment.model.vo.CommentSummaryResponse;
@@ -22,13 +23,16 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final AccountRepository accountRepository;
     private final VideoRepository videoRepository;
+        private final CurrentUserProvider currentUserProvider;
 
     public CommentService(CommentRepository commentRepository,
                           AccountRepository accountRepository,
-                          VideoRepository videoRepository) {
+                          VideoRepository videoRepository,
+                                                  CurrentUserProvider currentUserProvider) {
         this.commentRepository = commentRepository;
         this.accountRepository = accountRepository;
         this.videoRepository = videoRepository;
+                this.currentUserProvider = currentUserProvider;
     }
 
     private AccountSummaryResponse createAccountSummary(Account author) {
@@ -42,7 +46,7 @@ public class CommentService {
 
     @Transactional
     public CommentDetailResponse createComment(CreateCommentRequest req) {
-        Account author = accountRepository.findById(req.getAuthorId())
+                Account author = accountRepository.findById(currentUserProvider.getCurrentAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
 
         Video video = videoRepository.findById(req.getVideoId())
@@ -94,13 +98,13 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(Long id, Long requesterAccountId) {
+    public void deleteComment(Long requesterAccountId) {
         Account account = accountRepository.findById(requesterAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
         if (account.isDeleted()) {
             throw new IllegalStateException("Withdrawn account can not delete comments");
         }
-        Comment comment = commentRepository.findByIdAndAuthor_Id(id, requesterAccountId)
+                Comment comment = commentRepository.findByIdAndAuthor_Id(currentUserProvider.getCurrentAccountId(), requesterAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
 
         commentRepository.delete(comment);

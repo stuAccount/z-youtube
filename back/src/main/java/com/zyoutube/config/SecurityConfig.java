@@ -22,7 +22,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(HttpMethod.GET, "/accounts/profile/").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/accounts/profile/*").permitAll()
                     .requestMatchers(HttpMethod.GET, "/videos").permitAll()
                     .requestMatchers(HttpMethod.GET, "/comments").permitAll()
                     .requestMatchers(HttpMethod.GET, "/ping").permitAll()

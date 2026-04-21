@@ -36,10 +36,10 @@ public class CommentController {
         return ApiResponse.success(commentService.getComments(videoId, page, size));
     }
 
-    @DeleteMapping("{id}")
-    public ApiResponse<Void> deleteComment(@PathVariable Long id,
+    @DeleteMapping("")
+    public ApiResponse<Void> deleteComment(
                                            @RequestParam Long requesterAccountId) {
-        commentService.deleteComment(id, requesterAccountId);
+        commentService.deleteComment(requesterAccountId);
         return ApiResponse.success(null);
     }
 }

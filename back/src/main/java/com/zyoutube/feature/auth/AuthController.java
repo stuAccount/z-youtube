@@ -7,6 +7,7 @@ package com.zyoutube.feature.auth;
 import com.zyoutube.common.api.ApiResponse;
 import com.zyoutube.feature.account.AccountService;
 import com.zyoutube.feature.auth.model.dto.LoginRequest;
+import com.zyoutube.feature.auth.model.vo.CurrentAccountResponse;
 import com.zyoutube.feature.auth.model.vo.LoginResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,14 +29,14 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ApiResponse<LoginResponse> me() {
+    public ApiResponse<CurrentAccountResponse> me() {
         return ApiResponse.success(authService.getCurrentUser());
     }   
 
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout() {
-        authService.logout();
+    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        authService.logout(request, response);
         return ApiResponse.success(null);
     }
 

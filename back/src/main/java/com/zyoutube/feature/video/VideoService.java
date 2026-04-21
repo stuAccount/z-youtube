@@ -3,6 +3,7 @@ package com.zyoutube.feature.video;
 import com.zyoutube.feature.account.AccountRepository;
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.account.model.vo.AccountSummaryResponse;
+import com.zyoutube.feature.auth.context.CurrentUserProvider;
 import com.zyoutube.feature.video.model.dto.CreateVideoRequest;
 import com.zyoutube.feature.video.model.entity.Video;
 import com.zyoutube.feature.video.model.type.VideoStatus;
@@ -16,20 +17,18 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
 public class VideoService {
     private final VideoRepository videoRepository;
     private final AccountRepository accountRepository;
-    private final EntityManager entityManager;
+    private final CurrentUserProvider currentUserProvider;
 
     public VideoService(VideoRepository videoRepository,
                         AccountRepository accountRepository,
-                        EntityManager entityManager) {
+                        EntityManager entityManager, CurrentUserProvider currentUserProvider) {
         this.videoRepository = videoRepository;
         this.accountRepository = accountRepository;
-        this.entityManager = entityManager;
+        this.currentUserProvider = currentUserProvider;
     }
 
     private AccountSummaryResponse createAccountSummary(Account author) {
@@ -43,7 +42,7 @@ public class VideoService {
 
     @Transactional
     public VideoDetailResponse createVideo(CreateVideoRequest req) {
-        Account author = accountRepository.findById(req.getAuthorId())
+        Account author = accountRepository.findById(currentUserProvider.getCurrentAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
 
         if (author.isDeleted()) {
@@ -120,14 +119,14 @@ public class VideoService {
     }
 
     @Transactional
-    public void deleteVideo(Long id, Long requesterAccountId) {
+    public void deleteVideo(Long requesterAccountId) {
         Account account = accountRepository.findById(requesterAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
         if (account.isDeleted()) {
             throw new IllegalStateException("Withdrawn account can not delete videos");
         }
 
-        Video video = videoRepository.findByIdAndAuthor_Id(id, requesterAccountId)
+        Video video = videoRepository.findByIdAndAuthor_Id(currentUserProvider.getCurrentAccountId(), requesterAccountId)
                         .orElseThrow(() -> new IllegalArgumentException("Video not found"));
 
         videoRepository.delete(video);
