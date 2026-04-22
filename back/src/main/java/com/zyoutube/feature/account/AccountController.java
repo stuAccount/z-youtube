@@ -18,39 +18,37 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    @PostMapping("register")
+    @PostMapping("/register")
     public ApiResponse<SelfProfileResponse> register(@Valid @RequestBody RegisterAccountRequest req) {
         return ApiResponse.success(accountService.register(req));
     }
 
-    
-    @GetMapping("{id}")
-    public ApiResponse<SelfProfileResponse> getSelfProfile(@PathVariable Long id) {
-        return ApiResponse.success(accountService.getSelfProfile(id));
+
+    @GetMapping("/profile")
+    public ApiResponse<SelfProfileResponse> getSelfProfile() {
+        return ApiResponse.success(accountService.getSelfProfile());
     }
 
-    @GetMapping("profile/{username}")
+    @GetMapping("/profile/{username}")
     public ApiResponse<PublicProfileResponse> getPublicProfile(@PathVariable String username) {
         return ApiResponse.success(accountService.getPublicProfile(username));
-    }   
-
-
-    @PatchMapping("{id}/profile")
-    public ApiResponse<SelfProfileResponse> updateProfile(@PathVariable Long id,
-                                                          @Valid @RequestBody UpdateProfileRequest req) {
-        return ApiResponse.success(accountService.updateProfile(id, req));
     }
 
-    @PatchMapping("{id}/password")
-    public ApiResponse<Void> changePassword(@PathVariable Long id,
-                                                           @Valid @RequestBody ChangePasswordRequest req) {
-        accountService.changePassword(id, req);
+
+    @PatchMapping("/profile")
+    public ApiResponse<SelfProfileResponse> updateProfile(@Valid @RequestBody UpdateProfileRequest req) {
+        return ApiResponse.success(accountService.updateProfile(req));
+    }
+
+    @PatchMapping("/password")
+    public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordRequest req) {
+        accountService.changePassword(req);
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("{id}")
-    public ApiResponse<Void> withdraw(@PathVariable Long id) {
-        accountService.withdraw(id);
+    @DeleteMapping
+    public ApiResponse<Void> withdraw() {
+        accountService.withdraw();
         return ApiResponse.success(null);
     }
 
