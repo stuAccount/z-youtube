@@ -12,5 +12,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     // Study point: derived query name -> SQL by video_id with pagination.
     Page<Comment> findAllByVideo_Id(Long videoId, Pageable pageable);
 
+    void deleteAllByVideo_Id(Long videoId);
+
     Optional<Comment> findByIdAndAuthor_Id(Long id, Long authorId);
 }

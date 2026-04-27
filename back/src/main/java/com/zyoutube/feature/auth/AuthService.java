@@ -1,5 +1,6 @@
 package com.zyoutube.feature.auth;
 
+import com.zyoutube.common.exception.UnauthorizedException;
 import com.zyoutube.feature.account.AccountRepository;
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.auth.context.CurrentUserProvider;
@@ -11,7 +12,6 @@ import com.zyoutube.feature.auth.security.AccountUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -48,7 +48,7 @@ public class AuthService {
                 )
             );
         } catch (AuthenticationException e) {
-            throw new BadCredentialsException("Invalid username or password");
+            throw new UnauthorizedException("Invalid username or password");
         }
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -66,8 +66,8 @@ public class AuthService {
             account.getUsername(),
             account.getEmail(),
             account.getNickname(),
-            account.getBio(),
-            account.getAvatarUrl()
+            account.getAvatarUrl(),
+            account.getBio()
         );
     }
 

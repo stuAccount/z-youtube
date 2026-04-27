@@ -10,11 +10,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class CurrentUserProvider {
     public Long getCurrentAccountId() {
+        Long accountId = getCurrentAccountIdOrNull();
+        if (accountId == null) {
+            throw new UnauthorizedException("No authenticated user");
+        }
+        return accountId;
+    }
+
+    public Long getCurrentAccountIdOrNull() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
-            throw new UnauthorizedException("No authenticated user");
+            return null;
         }
 
         if (!(authentication.getPrincipal() instanceof AccountUserDetails principal)) {

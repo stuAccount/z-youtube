@@ -91,38 +91,53 @@ public class Video {
         this.visibility = visibility;
     }
 
+    /**
+     * 发布视频
+     * 
+     * @throws IllegalStateException 如果视频已归档，则抛出异常
+     */
     public void publish() {
         if (this.status == VideoStatus.ARCHIVED) {
             throw new IllegalStateException("Archived video can not be published");
         }
         this.status = VideoStatus.PUBLISHED;
-        if (getVisibilityOrDefault() == VideoVisibility.PRIVATE) {
-            this.visibility = VideoVisibility.PUBLIC;
-        }
     }
 
+    /**
+     * 将已发布的视频取消发布，状态变更为草稿
+     * 
+     * @throws IllegalStateException 当视频状态不是已发布时抛出异常
+     */
     public void unpublish() {
         if (this.status != VideoStatus.PUBLISHED) {
             throw new IllegalStateException("Only published video can be unpublished");
         }
         this.status = VideoStatus.DRAFT;
-        if (getVisibilityOrDefault() == VideoVisibility.PUBLIC) {
-            this.visibility = VideoVisibility.PRIVATE;
-        }
+    }
+
+    /**
+     * 将视频状态设置为已归档
+     */
+    public void archive() {
+        this.status = VideoStatus.ARCHIVED;
+    }
+
+    public boolean isOwnedBy(Long accountId) {
+        return accountId != null
+                && this.author != null
+                && accountId.equals(this.author.getId());
     }
 
     public VideoVisibility getVisibilityOrDefault() {
-        if (this.visibility != null) {
-            return this.visibility;
-        }
-
-        return this.status == VideoStatus.PUBLISHED ? VideoVisibility.PUBLIC : VideoVisibility.PRIVATE;
+        return this.visibility != null ? this.visibility : VideoVisibility.PRIVATE;
     }
 
-    public boolean isPubliclyVisible() {
-        return this.status == VideoStatus.PUBLISHED && getVisibilityOrDefault() == VideoVisibility.PUBLIC;
-    }
-
+    /**
+     * 在实体持久化到数据库之前自动执行的回调方法
+     * 设置创建时间和更新时间为当前时间
+     * 如果视频状态为空，则默认设置为草稿状态
+     * 如果视频可见性为空，则默认设置为私有状态
+     */
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -137,6 +152,12 @@ public class Video {
         }
     }
 
+    /**
+     * 在实体更新前自动设置更新时间
+     * <p>
+     * 使用 JPA @PreUpdate 生命周期回调，在实体数据持久化到数据库之前自动更新 updatedAt 字段
+     * </p>
+     */
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();

@@ -6,7 +6,6 @@ import com.zyoutube.feature.account.model.vo.SelfProfileResponse;
 import com.zyoutube.feature.account.model.dto.RegisterAccountRequest;
 import com.zyoutube.feature.account.model.dto.UpdateProfileRequest;
 import com.zyoutube.feature.account.model.entity.Account;
-import com.zyoutube.feature.auth.context.CurrentUserProvider;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,19 +17,16 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final EntityManager entityManager;
     private final PasswordEncoder passwordEncoder;
-    private final CurrentUserProvider currentUserProvider;
+    private final AccountFinder accountFinder;
 
-    public AccountService(AccountRepository accountRepository, EntityManager entityManager, PasswordEncoder passwordEncoder,
-            CurrentUserProvider currentUserProvider) {
+    public AccountService(AccountRepository accountRepository,
+                          EntityManager entityManager,
+                          PasswordEncoder passwordEncoder,
+                          AccountFinder accountFinder) {
         this.accountRepository = accountRepository;
         this.entityManager = entityManager;
         this.passwordEncoder = passwordEncoder;
-        this.currentUserProvider = currentUserProvider;
-    }
-
-    private Account getCurrentAccount() {
-        return accountRepository.findById(currentUserProvider.getCurrentAccountId())
-                .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
+        this.accountFinder = accountFinder;
     }
 
     private SelfProfileResponse toSelfProfileResponse(Account account) {
@@ -64,7 +60,7 @@ public class AccountService {
     
     @Transactional
     public void withdraw() {
-        Account account = getCurrentAccount();
+        Account account = accountFinder.getCurrentAccount();
 
         if (account.isDeleted()) {
             throw new IllegalStateException("Account already withdrawn");
@@ -73,7 +69,7 @@ public class AccountService {
     }
 
     public SelfProfileResponse getSelfProfile() {
-        return toSelfProfileResponse(getCurrentAccount());
+        return toSelfProfileResponse(accountFinder.getCurrentAccount());
     }
 
     public PublicProfileResponse getPublicProfile(String username) {
@@ -90,8 +86,8 @@ public class AccountService {
 
     @Transactional
     public SelfProfileResponse updateProfile(@Valid UpdateProfileRequest req) {
-        Long id = currentUserProvider.getCurrentAccountId();
-        Account account = getCurrentAccount();
+        Account account = accountFinder.getCurrentAccount();
+        Long id = account.getId();
 
         if(accountRepository.existsByEmailAndIdNot(req.getEmail(), id)) {
             throw new IllegalArgumentException("Email already been used");
@@ -114,7 +110,7 @@ public class AccountService {
 
     @Transactional
     public void changePassword(@Valid ChangePasswordRequest req) {
-        Account account = getCurrentAccount();
+        Account account = accountFinder.getCurrentAccount();
 
         if (!passwordEncoder.matches(req.getOldPassword(), account.getPasswordHash())) {
             throw new IllegalArgumentException("Old Password is incorrect");

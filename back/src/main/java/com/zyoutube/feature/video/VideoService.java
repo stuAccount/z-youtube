@@ -1,9 +1,11 @@
 package com.zyoutube.feature.video;
 
-import com.zyoutube.feature.account.AccountRepository;
+import com.zyoutube.common.exception.NotFoundException;
+import com.zyoutube.feature.account.AccountFinder;
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.account.model.vo.AccountSummaryResponse;
 import com.zyoutube.feature.auth.context.CurrentUserProvider;
+import com.zyoutube.feature.comment.CommentRepository;
 import com.zyoutube.feature.video.model.dto.CreateVideoRequest;
 import com.zyoutube.feature.video.model.dto.UpdateVideoRequest;
 import com.zyoutube.feature.video.model.entity.Video;
@@ -11,6 +13,7 @@ import com.zyoutube.feature.video.model.type.VideoStatus;
 import com.zyoutube.feature.video.model.type.VideoVisibility;
 import com.zyoutube.feature.video.model.vo.VideoDetailResponse;
 import com.zyoutube.feature.video.model.vo.VideoSummaryResponse;
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,18 +22,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@AllArgsConstructor
 public class VideoService {
     private final VideoRepository videoRepository;
-    private final AccountRepository accountRepository;
+    private final AccountFinder accountFinder;
+    private final CommentRepository commentRepository;
     private final CurrentUserProvider currentUserProvider;
-
-    public VideoService(VideoRepository videoRepository,
-                        AccountRepository accountRepository,
-                        CurrentUserProvider currentUserProvider) {
-        this.videoRepository = videoRepository;
-        this.accountRepository = accountRepository;
-        this.currentUserProvider = currentUserProvider;
-    }
+    private final VideoFinder videoFinder;
 
     private AccountSummaryResponse createAccountSummary(Account author) {
         return new AccountSummaryResponse(
@@ -53,6 +51,14 @@ public class VideoService {
         );
     }
 
+    /**
+     * 规范化可编辑字段的值
+     * 
+     * @param value     待规范化的字段值
+     * @param fieldName 字段名称，用于异常信息
+     * @return 去除首尾空格后的非空字符串
+     * @throws IllegalArgumentException 当字段值为空或仅包含空白字符时抛出
+     */
     private String normalizeEditableField(String value, String fieldName) {
         String trimmed = value.trim();
         if (trimmed.isEmpty()) {
@@ -61,11 +67,12 @@ public class VideoService {
         return trimmed;
     }
 
-    private Video getOwnedVideo(Long videoId) {
-        return videoRepository.findByIdAndAuthor_Id(videoId, currentUserProvider.getCurrentAccountId())
-                .orElseThrow(() -> new IllegalArgumentException("Video not found"));
-    }
-
+    /**
+     * 规范化搜索关键词，去除首尾空格并处理空值情况
+     * 
+     * @param keyword 原始搜索关键词，可能为 null 或包含首尾空格
+     * @return 规范化后的关键词，去除首尾空格；如果输入为 null 或去除空格后为空字符串，则返回 null
+     */
     private String normalizeKeyword(String keyword) {
         if (keyword == null) {
             return null;
@@ -77,8 +84,7 @@ public class VideoService {
 
     @Transactional
     public VideoDetailResponse createVideo(CreateVideoRequest req) {
-        Account author = accountRepository.findById(currentUserProvider.getCurrentAccountId())
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+        Account author = accountFinder.getCurrentAccount();
 
         Video video = new Video();
         video.assignAuthor(author);
@@ -97,7 +103,7 @@ public class VideoService {
             throw new IllegalArgumentException("At least one field must be provided");
         }
 
-        Video video = getOwnedVideo(videoId);
+        Video video = videoFinder.getOwnedVideo(videoId);
 
         if (req.getTitle() != null) {
             video.changeTitle(normalizeEditableField(req.getTitle(), "Title"));
@@ -114,7 +120,7 @@ public class VideoService {
 
     @Transactional
     public VideoDetailResponse publishVideo(Long videoId) {
-        Video video = getOwnedVideo(videoId);
+        Video video = videoFinder.getOwnedVideo(videoId);
         video.publish();
 
         return createVideoDetailResponse(video);
@@ -122,21 +128,22 @@ public class VideoService {
 
     @Transactional
     public VideoDetailResponse unpublishVideo(Long videoId) {
-        Video video = getOwnedVideo(videoId);
+        Video video = videoFinder.getOwnedVideo(videoId);
         video.unpublish();
 
         return createVideoDetailResponse(video);
     }
 
+
     @Transactional(readOnly = true)
-    public VideoDetailResponse getDetail(Long videoId) {
-        Video video = videoRepository.findById(videoId)
-                .orElseThrow(() -> new IllegalArgumentException("Video not found"));
+    public VideoDetailResponse getVideoDetail(Long videoId) {
+        Video video = videoFinder.findVideo(videoId);
 
-        if (!video.isPubliclyVisible()) {
-            throw new IllegalStateException("Video is private");
+        Long viewerId = currentUserProvider.getCurrentAccountIdOrNull();
+        if (!VideoAccessPolicy.canViewDetail(video, viewerId)) {
+            // Throw 404 Not Found instead of 403 Forbidden or 401 Unauthorized to avoid leaking the existence of the video
+            throw new NotFoundException("Video not found");
         }
-
         return createVideoDetailResponse(video);
     }
 
@@ -184,7 +191,10 @@ public class VideoService {
 
     @Transactional
     public void deleteVideo(Long videoId) {
-        Video video = getOwnedVideo(videoId);
+        Video video = videoFinder.getOwnedVideo(videoId);
+
+        commentRepository.deleteAllByVideo_Id(videoId);
+
         videoRepository.delete(video);
     }
 }

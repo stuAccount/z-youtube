@@ -49,8 +49,8 @@ public class VideoController {
     }
 
     @GetMapping("{id}")
-    public ApiResponse<VideoDetailResponse> getDetail(@PathVariable Long id) {
-        return ApiResponse.success(videoService.getDetail(id));
+    public ApiResponse<VideoDetailResponse> getVideoDetail(@PathVariable Long id) {
+        return ApiResponse.success(videoService.getVideoDetail(id));
     }
 
     @GetMapping

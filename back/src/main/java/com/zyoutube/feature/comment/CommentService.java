@@ -1,15 +1,17 @@
 package com.zyoutube.feature.comment;
 
-import com.zyoutube.feature.account.AccountRepository;
+import com.zyoutube.common.exception.NotFoundException;
+import com.zyoutube.feature.account.AccountFinder;
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.account.model.vo.AccountSummaryResponse;
 import com.zyoutube.feature.auth.context.CurrentUserProvider;
 import com.zyoutube.feature.comment.model.dto.CreateCommentRequest;
+import com.zyoutube.feature.comment.model.entity.Comment;
 import com.zyoutube.feature.comment.model.vo.CommentDetailResponse;
 import com.zyoutube.feature.comment.model.vo.CommentSummaryResponse;
-import com.zyoutube.feature.video.VideoRepository;
+import com.zyoutube.feature.video.VideoAccessPolicy;
+import com.zyoutube.feature.video.VideoFinder;
 import com.zyoutube.feature.video.model.entity.Video;
-import com.zyoutube.feature.comment.model.entity.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,18 +22,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CommentService {
     private final CommentRepository commentRepository;
-    private final AccountRepository accountRepository;
-    private final VideoRepository videoRepository;
-        private final CurrentUserProvider currentUserProvider;
+    private final AccountFinder accountFinder;
+    private final VideoFinder videoFinder;
+    private final CurrentUserProvider currentUserProvider;
 
     public CommentService(CommentRepository commentRepository,
-                          AccountRepository accountRepository,
-                          VideoRepository videoRepository,
-                                                  CurrentUserProvider currentUserProvider) {
+                          AccountFinder accountFinder,
+                          VideoFinder videoFinder,
+                          CurrentUserProvider currentUserProvider) {
         this.commentRepository = commentRepository;
-        this.accountRepository = accountRepository;
-        this.videoRepository = videoRepository;
-                this.currentUserProvider = currentUserProvider;
+        this.accountFinder = accountFinder;
+        this.videoFinder = videoFinder;
+        this.currentUserProvider = currentUserProvider;
+    }
+
+    private Comment getOwnedComment(Long commentId, Long accountId) {
+        return commentRepository.findByIdAndAuthor_Id(commentId, accountId)
+                .orElseThrow(() -> new NotFoundException("Comment not found"));
     }
 
     private AccountSummaryResponse createAccountSummary(Account author) {
@@ -45,18 +52,20 @@ public class CommentService {
 
     @Transactional
     public CommentDetailResponse createComment(CreateCommentRequest req) {
-                Account author = accountRepository.findById(currentUserProvider.getCurrentAccountId())
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+        Account author = accountFinder.getCurrentAccount();
+        Long currentAccountId = author.getId();
 
-        Video video = videoRepository.findById(req.getVideoId())
-                .orElseThrow(() -> new IllegalArgumentException("Video not found"));
+        Video video = videoFinder.findVideo(req.getVideoId());
 
         if (author.isDeleted()) {
             throw new IllegalStateException("Withdrawn account cannot comment");
         }
 
-                if (!video.isPubliclyVisible()) {
-            throw new IllegalArgumentException("Video is private");
+        if (!VideoAccessPolicy.canViewDetail(video, currentAccountId)) {
+            throw new NotFoundException("Video not found");
+        }
+        if (!VideoAccessPolicy.canCreateComment(video, currentAccountId)) {
+            throw new IllegalStateException("Commenting is not allowed for this video");
         }
 
         Comment comment = new Comment();
@@ -72,7 +81,6 @@ public class CommentService {
                 createAccountSummary(author),
                 comment.getCreatedAt()
         );
-
     }
 
     @Transactional(readOnly = true)
@@ -83,12 +91,11 @@ public class CommentService {
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-                Video video = videoRepository.findById(videoId)
-                .orElseThrow(() -> new IllegalArgumentException("Video not found"));
-
-                if (!video.isPubliclyVisible()) {
-                        throw new IllegalArgumentException("Video is private");
-                }
+        Video video = videoFinder.findVideo(videoId);
+        Long viewerId = currentUserProvider.getCurrentAccountIdOrNull();
+        if (!VideoAccessPolicy.canReadComments(video, viewerId)) {
+            throw new NotFoundException("Video not found");
+        }
 
         Page<Comment> commentPage = commentRepository.findAllByVideo_Id(videoId, pageable);
 
@@ -101,18 +108,15 @@ public class CommentService {
     }
 
     @Transactional
-        public void deleteComment(Long commentId) {
-                Long currentAccountId = currentUserProvider.getCurrentAccountId();
-                Account account = accountRepository.findById(currentAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+    public void deleteComment(Long commentId) {
+        Account account = accountFinder.getCurrentAccount();
+        Long currentAccountId = account.getId();
 
         if (account.isDeleted()) {
             throw new IllegalStateException("Withdrawn account can not delete comments");
         }
 
-        Comment comment = commentRepository.findByIdAndAuthor_Id(commentId, currentAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
-
+        Comment comment = getOwnedComment(commentId, currentAccountId);
         commentRepository.delete(comment);
     }
 }

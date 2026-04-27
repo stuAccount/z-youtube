@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * TODO Sprint 7: login response payload.
+ *  
  */
 @Getter
 @AllArgsConstructor
