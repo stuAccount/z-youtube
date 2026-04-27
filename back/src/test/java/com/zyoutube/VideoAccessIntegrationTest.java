@@ -94,4 +94,54 @@ class VideoAccessIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Only published videos can be searched"));
     }
+
+    @Test
+    void myVideoListingRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/me/videos"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void myVideoListingReturnsOwnedVideosAcrossStatusesAndVisibilities() throws Exception {
+        MockHttpSession ownerSession = registerAndLogin("my-videos-owner");
+        MockHttpSession otherSession = registerAndLogin("my-videos-other");
+
+        Long draftId = createVideo(ownerSession, "My draft", "draft", "PRIVATE");
+        Long privatePublishedId = createPublishedVideo(ownerSession, "My private", "private", "PRIVATE");
+        Long unlistedPublishedId = createPublishedVideo(ownerSession, "My unlisted", "unlisted", "UNLISTED");
+        Long publicPublishedId = createPublishedVideo(ownerSession, "My public", "public", "PUBLIC");
+        createPublishedVideo(otherSession, "Other public", "other", "PUBLIC");
+
+        MvcResult result = mockMvc.perform(get("/api/me/videos").session(ownerSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content[0].updatedAt").exists())
+                .andExpect(jsonPath("$.data.content[0].author").doesNotExist())
+                .andReturn();
+
+        List<Integer> ids = readIntList(result, "$.data.content[*].id");
+        assertEquals(
+                List.of(publicPublishedId.intValue(), unlistedPublishedId.intValue(), privatePublishedId.intValue(), draftId.intValue()),
+                ids
+        );
+    }
+
+    @Test
+    void myVideoListingSupportsStatusAndVisibilityFilters() throws Exception {
+        MockHttpSession ownerSession = registerAndLogin("my-videos-filter-owner");
+
+        createVideo(ownerSession, "Draft private", "draft", "PRIVATE");
+        createPublishedVideo(ownerSession, "Published private", "private", "PRIVATE");
+        createPublishedVideo(ownerSession, "Published public", "public", "PUBLIC");
+
+        mockMvc.perform(get("/api/me/videos")
+                        .session(ownerSession)
+                        .param("status", "PUBLISHED")
+                        .param("visibility", "PRIVATE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].title").value("Published private"))
+                .andExpect(jsonPath("$.data.content[0].status").value("PUBLISHED"))
+                .andExpect(jsonPath("$.data.content[0].visibility").value("PRIVATE"));
+    }
 }

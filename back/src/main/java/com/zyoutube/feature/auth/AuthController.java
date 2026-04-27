@@ -1,11 +1,7 @@
 package com.zyoutube.feature.auth;
 
-/**
- * TODO Sprint 7: authentication endpoints such as login, logout, and me.
- */
 
 import com.zyoutube.common.api.ApiResponse;
-import com.zyoutube.feature.account.AccountService;
 import com.zyoutube.feature.auth.model.dto.LoginRequest;
 import com.zyoutube.feature.auth.model.vo.CurrentAccountResponse;
 import com.zyoutube.feature.auth.model.vo.LoginResponse;

@@ -11,8 +11,9 @@ import com.zyoutube.feature.video.model.dto.UpdateVideoRequest;
 import com.zyoutube.feature.video.model.entity.Video;
 import com.zyoutube.feature.video.model.type.VideoStatus;
 import com.zyoutube.feature.video.model.type.VideoVisibility;
+import com.zyoutube.feature.video.model.vo.MyVideoSummaryResponse;
+import com.zyoutube.feature.video.model.vo.PublicVideoSummaryResponse;
 import com.zyoutube.feature.video.model.vo.VideoDetailResponse;
-import com.zyoutube.feature.video.model.vo.VideoSummaryResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +49,28 @@ public class VideoService {
                 video.getVisibilityOrDefault(),
                 createAccountSummary(video.getAuthor()),
                 video.getCreatedAt()
+        );
+    }
+
+    private PublicVideoSummaryResponse createPublicVideoSummaryResponse(Video video) {
+        return new PublicVideoSummaryResponse(
+                video.getId(),
+                video.getTitle(),
+                video.getStatus(),
+                video.getVisibilityOrDefault(),
+                createAccountSummary(video.getAuthor()),
+                video.getCreatedAt()
+        );
+    }
+
+    private MyVideoSummaryResponse createMyVideoSummaryResponse(Video video) {
+        return new MyVideoSummaryResponse(
+                video.getId(),
+                video.getTitle(),
+                video.getStatus(),
+                video.getVisibilityOrDefault(),
+                video.getCreatedAt(),
+                video.getUpdatedAt()
         );
     }
 
@@ -148,12 +171,12 @@ public class VideoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<VideoSummaryResponse> getVideos(Long authorId,
-                                                VideoStatus status,
-                                                VideoVisibility visibility,
-                                                String keyword,
-                                                int page,
-                                                int size) {
+    public Page<PublicVideoSummaryResponse> getVideos(Long authorId,
+                                                      VideoStatus status,
+                                                      VideoVisibility visibility,
+                                                      String keyword,
+                                                      int page,
+                                                      int size) {
         Pageable pageable = PageRequest.of(
                 Math.max(0, page),
                 Math.max(1, size),
@@ -179,14 +202,33 @@ public class VideoService {
                 pageable
         );
 
-        return videoPage.map(video -> new VideoSummaryResponse(
-                video.getId(),
-                video.getTitle(),
-                video.getStatus(),
-                video.getVisibilityOrDefault(),
-                createAccountSummary(video.getAuthor()),
-                video.getCreatedAt()
-        ));
+        return videoPage.map(this::createPublicVideoSummaryResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MyVideoSummaryResponse> getMyVideos(VideoStatus status,
+                                                    VideoVisibility visibility,
+                                                    String keyword,
+                                                    int page,
+                                                    int size) {
+        Pageable pageable = PageRequest.of(
+                Math.max(0, page),
+                Math.max(1, size),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Long currentAccountId = currentUserProvider.getCurrentAccountId();
+        String normalizedKeyword = normalizeKeyword(keyword);
+
+        Page<Video> videoPage = videoRepository.searchOwnedVideos(
+                currentAccountId,
+                status,
+                visibility,
+                normalizedKeyword,
+                pageable
+        );
+
+        return videoPage.map(this::createMyVideoSummaryResponse);
     }
 
     @Transactional

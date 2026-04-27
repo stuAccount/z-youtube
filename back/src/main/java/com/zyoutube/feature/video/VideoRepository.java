@@ -37,4 +37,21 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
                                     @Param("visibility") VideoVisibility visibility,
                                     @Param("keyword") String keyword,
                                     Pageable pageable);
+
+    @Query("""
+            select v from Video v
+            where v.author.id = :authorId
+              and (:status is null or v.status = :status)
+              and (:visibility is null or v.visibility = :visibility)
+              and (
+                    :keyword is null
+                    or lower(v.title) like lower(concat('%', :keyword, '%'))
+                    or lower(v.description) like lower(concat('%', :keyword, '%'))
+              )
+            """)
+    Page<Video> searchOwnedVideos(@Param("authorId") Long authorId,
+                                  @Param("status") VideoStatus status,
+                                  @Param("visibility") VideoVisibility visibility,
+                                  @Param("keyword") String keyword,
+                                  Pageable pageable);
 }

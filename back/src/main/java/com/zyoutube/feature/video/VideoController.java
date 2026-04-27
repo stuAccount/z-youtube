@@ -6,7 +6,7 @@ import com.zyoutube.feature.video.model.dto.UpdateVideoRequest;
 import com.zyoutube.feature.video.model.type.VideoStatus;
 import com.zyoutube.feature.video.model.type.VideoVisibility;
 import com.zyoutube.feature.video.model.vo.VideoDetailResponse;
-import com.zyoutube.feature.video.model.vo.VideoSummaryResponse;
+import com.zyoutube.feature.video.model.vo.PublicVideoSummaryResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -54,12 +54,12 @@ public class VideoController {
     }
 
     @GetMapping
-    public ApiResponse<Page<VideoSummaryResponse>> getVideos(@RequestParam(required = false) Long authorId,
-                                                             @RequestParam(required = false) VideoStatus status,
-                                                             @RequestParam(required = false) VideoVisibility visibility,
-                                                             @RequestParam(required = false) String keyword,
-                                                             @RequestParam(defaultValue = "0") int page,
-                                                             @RequestParam(defaultValue = "10") int size) {
+    public ApiResponse<Page<PublicVideoSummaryResponse>> getVideos(@RequestParam(required = false) Long authorId,
+                                                                   @RequestParam(required = false) VideoStatus status,
+                                                                   @RequestParam(required = false) VideoVisibility visibility,
+                                                                   @RequestParam(required = false) String keyword,
+                                                                   @RequestParam(defaultValue = "0") int page,
+                                                                   @RequestParam(defaultValue = "10") int size) {
         return ApiResponse.success(videoService.getVideos(authorId, status, visibility, keyword, page, size));
     }
 
