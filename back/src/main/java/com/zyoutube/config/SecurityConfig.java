@@ -22,12 +22,12 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(HttpMethod.GET, "/accounts/profile/*").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/videos").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/comments").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/accounts/profile/*").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/videos", "/api/videos/*").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
                     .requestMatchers(HttpMethod.GET, "/ping").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/accounts/register").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/accounts/register").permitAll()
                     .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults());

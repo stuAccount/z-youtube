@@ -2,6 +2,7 @@ package com.zyoutube.feature.video;
 
 import com.zyoutube.feature.video.model.entity.Video;
 import com.zyoutube.feature.video.model.type.VideoStatus;
+import com.zyoutube.feature.video.model.type.VideoVisibility;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,7 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
     @Query("""
             select v from Video v
             where v.status = :status
+              and v.visibility = :visibility
               and (:authorId is null or v.author.id = :authorId)
               and (
                     :keyword is null
@@ -32,6 +34,7 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
             """)
     Page<Video> searchVisibleVideos(@Param("authorId") Long authorId,
                                     @Param("status") VideoStatus status,
+                                    @Param("visibility") VideoVisibility visibility,
                                     @Param("keyword") String keyword,
                                     Pageable pageable);
 }

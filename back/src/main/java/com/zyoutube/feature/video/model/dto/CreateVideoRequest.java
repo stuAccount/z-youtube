@@ -1,7 +1,7 @@
 package com.zyoutube.feature.video.model.dto;
 
+import com.zyoutube.feature.video.model.type.VideoVisibility;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,4 +16,6 @@ public class CreateVideoRequest {
     @NotBlank(message = "Description can not be blank")
     @Size(max = 5000, message = "Description must be at most 5000 characters")
     private String description;
+
+    private VideoVisibility visibility;
 }

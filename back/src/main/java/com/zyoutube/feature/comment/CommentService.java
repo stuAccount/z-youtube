@@ -9,7 +9,6 @@ import com.zyoutube.feature.comment.model.vo.CommentDetailResponse;
 import com.zyoutube.feature.comment.model.vo.CommentSummaryResponse;
 import com.zyoutube.feature.video.VideoRepository;
 import com.zyoutube.feature.video.model.entity.Video;
-import com.zyoutube.feature.video.model.type.VideoStatus;
 import com.zyoutube.feature.comment.model.entity.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -56,7 +55,7 @@ public class CommentService {
             throw new IllegalStateException("Withdrawn account cannot comment");
         }
 
-        if (video.getStatus() != VideoStatus.PUBLISHED) {
+                if (!video.isPubliclyVisible()) {
             throw new IllegalArgumentException("Video is private");
         }
 
@@ -84,8 +83,12 @@ public class CommentService {
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Video video = videoRepository.findById(videoId)
+                Video video = videoRepository.findById(videoId)
                 .orElseThrow(() -> new IllegalArgumentException("Video not found"));
+
+                if (!video.isPubliclyVisible()) {
+                        throw new IllegalArgumentException("Video is private");
+                }
 
         Page<Comment> commentPage = commentRepository.findAllByVideo_Id(videoId, pageable);
 
@@ -98,13 +101,16 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(Long requesterAccountId) {
-        Account account = accountRepository.findById(requesterAccountId)
+        public void deleteComment(Long commentId) {
+                Long currentAccountId = currentUserProvider.getCurrentAccountId();
+                Account account = accountRepository.findById(currentAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
         if (account.isDeleted()) {
             throw new IllegalStateException("Withdrawn account can not delete comments");
         }
-                Comment comment = commentRepository.findByIdAndAuthor_Id(currentUserProvider.getCurrentAccountId(), requesterAccountId)
+
+        Comment comment = commentRepository.findByIdAndAuthor_Id(commentId, currentAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
 
         commentRepository.delete(comment);

@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/comments")
+@RequestMapping("/api/comments")
 public class CommentController {
     private final CommentService commentService;
 
@@ -36,10 +35,9 @@ public class CommentController {
         return ApiResponse.success(commentService.getComments(videoId, page, size));
     }
 
-    @DeleteMapping("")
-    public ApiResponse<Void> deleteComment(
-                                           @RequestParam Long requesterAccountId) {
-        commentService.deleteComment(requesterAccountId);
+    @DeleteMapping
+    public ApiResponse<Void> deleteComment(@RequestParam Long commentId) {
+        commentService.deleteComment(commentId);
         return ApiResponse.success(null);
     }
 }

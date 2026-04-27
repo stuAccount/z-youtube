@@ -28,6 +28,22 @@ public class AccountService {
         this.currentUserProvider = currentUserProvider;
     }
 
+    private Account getCurrentAccount() {
+        return accountRepository.findById(currentUserProvider.getCurrentAccountId())
+                .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
+    }
+
+    private SelfProfileResponse toSelfProfileResponse(Account account) {
+        return new SelfProfileResponse(
+                account.getId(),
+                account.getUsername(),
+                account.getEmail(),
+                account.getNickname(),
+                account.getBio(),
+                account.getAvatarUrl()
+        );
+    }
+
     @Transactional
     public SelfProfileResponse register(RegisterAccountRequest req) {
         if(accountRepository.existsByEmail(req.getEmail())) {
@@ -48,8 +64,7 @@ public class AccountService {
     
     @Transactional
     public void withdraw() {
-        Account account = accountRepository.findById(currentUserProvider.getCurrentAccountId())
-                .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
+        Account account = getCurrentAccount();
 
         if (account.isDeleted()) {
             throw new IllegalStateException("Account already withdrawn");
@@ -58,15 +73,17 @@ public class AccountService {
     }
 
     public SelfProfileResponse getSelfProfile() {
-        Account account = accountRepository.findById(currentUserProvider.getCurrentAccountId())
-                .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
-        return new SelfProfileResponse(account.getId(), account.getUsername(), account.getEmail(),
-                account.getNickname(), account.getBio(), account.getAvatarUrl());
+        return toSelfProfileResponse(getCurrentAccount());
     }
 
     public PublicProfileResponse getPublicProfile(String username) {
         Account account = accountRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
+
+        if (account.isDeleted()) {
+            throw new IllegalArgumentException("Account not found!");
+        }
+
         return new PublicProfileResponse(account.getId(), account.getUsername(),
                 account.getNickname(), account.getBio(), account.getAvatarUrl());   
     }
@@ -74,8 +91,7 @@ public class AccountService {
     @Transactional
     public SelfProfileResponse updateProfile(@Valid UpdateProfileRequest req) {
         Long id = currentUserProvider.getCurrentAccountId();
-        Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
+        Account account = getCurrentAccount();
 
         if(accountRepository.existsByEmailAndIdNot(req.getEmail(), id)) {
             throw new IllegalArgumentException("Email already been used");
@@ -93,15 +109,12 @@ public class AccountService {
         if (req.getBio() != null) {
             account.setBio(req.getBio());
         }
-        return new SelfProfileResponse(account.getId(), account.getUsername(), account.getEmail(),
-                account.getNickname(), account.getBio(), account.getAvatarUrl());
+        return toSelfProfileResponse(account);
     }
 
     @Transactional
     public void changePassword(@Valid ChangePasswordRequest req) {
-        Long id = currentUserProvider.getCurrentAccountId();
-        Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
+        Account account = getCurrentAccount();
 
         if (!passwordEncoder.matches(req.getOldPassword(), account.getPasswordHash())) {
             throw new IllegalArgumentException("Old Password is incorrect");

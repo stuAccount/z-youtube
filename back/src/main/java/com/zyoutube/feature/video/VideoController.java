@@ -3,6 +3,7 @@ package com.zyoutube.feature.video;
 import com.zyoutube.common.api.ApiResponse;
 import com.zyoutube.feature.video.model.dto.CreateVideoRequest;
 import com.zyoutube.feature.video.model.type.VideoStatus;
+import com.zyoutube.feature.video.model.type.VideoVisibility;
 import com.zyoutube.feature.video.model.vo.VideoDetailResponse;
 import com.zyoutube.feature.video.model.vo.VideoSummaryResponse;
 import jakarta.validation.Valid;
@@ -49,10 +50,11 @@ public class VideoController {
     @GetMapping
     public ApiResponse<Page<VideoSummaryResponse>> getVideos(@RequestParam(required = false) Long authorId,
                                                              @RequestParam(required = false) VideoStatus status,
+                                                             @RequestParam(required = false) VideoVisibility visibility,
                                                              @RequestParam(required = false) String keyword,
                                                              @RequestParam(defaultValue = "0") int page,
                                                              @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.success(videoService.getVideos(authorId, status, keyword, page, size));
+        return ApiResponse.success(videoService.getVideos(authorId, status, visibility, keyword, page, size));
     }
 
     @DeleteMapping("{id}")

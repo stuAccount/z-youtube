@@ -7,6 +7,7 @@ import com.zyoutube.feature.auth.context.CurrentUserProvider;
 import com.zyoutube.feature.video.model.dto.CreateVideoRequest;
 import com.zyoutube.feature.video.model.entity.Video;
 import com.zyoutube.feature.video.model.type.VideoStatus;
+import com.zyoutube.feature.video.model.type.VideoVisibility;
 import com.zyoutube.feature.video.model.vo.VideoDetailResponse;
 import com.zyoutube.feature.video.model.vo.VideoSummaryResponse;
 import org.springframework.data.domain.Page;
@@ -45,6 +46,7 @@ public class VideoService {
                 video.getTitle(),
                 video.getDescription(),
                 video.getStatus(),
+            video.getVisibilityOrDefault(),
                 createAccountSummary(video.getAuthor()),
                 video.getCreatedAt()
         );
@@ -74,6 +76,7 @@ public class VideoService {
         video.changeTitle(req.getTitle().trim());
         video.changeDescription(req.getDescription().trim());
         video.changeStatus(VideoStatus.DRAFT);
+        video.changeVisibility(req.getVisibility() != null ? req.getVisibility() : VideoVisibility.PRIVATE);
 
         Video savedVideo = videoRepository.save(video);
         return createVideoDetailResponse(savedVideo);
@@ -85,6 +88,9 @@ public class VideoService {
 
         video.changeTitle(req.getTitle().trim());
         video.changeDescription(req.getDescription().trim());
+        if (req.getVisibility() != null) {
+            video.changeVisibility(req.getVisibility());
+        }
 
         return createVideoDetailResponse(video);
     }
@@ -102,7 +108,7 @@ public class VideoService {
         Video video = videoRepository.findById(videoId)
                 .orElseThrow(() -> new IllegalArgumentException("Video not found"));
 
-        if (video.getStatus() != VideoStatus.PUBLISHED) {
+        if (!video.isPubliclyVisible()) {
             throw new IllegalStateException("Video is private");
         }
 
@@ -110,25 +116,42 @@ public class VideoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<VideoSummaryResponse> getVideos(Long authorId, VideoStatus status, String keyword, int page, int size) {
+    public Page<VideoSummaryResponse> getVideos(Long authorId,
+                                                VideoStatus status,
+                                                VideoVisibility visibility,
+                                                String keyword,
+                                                int page,
+                                                int size) {
         Pageable pageable = PageRequest.of(
                 Math.max(0, page),
                 Math.max(1, size),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        VideoStatus visibleStatus = VideoStatus.PUBLISHED;
         if (status != null && status != VideoStatus.PUBLISHED) {
             throw new IllegalArgumentException("Only published videos can be searched");
         }
+        if (visibility != null && visibility != VideoVisibility.PUBLIC) {
+            throw new IllegalArgumentException("Only public videos can be searched");
+        }
+
+        VideoStatus visibleStatus = VideoStatus.PUBLISHED;
+        VideoVisibility visibleVisibility = VideoVisibility.PUBLIC;
 
         String normalizedKeyword = normalizeKeyword(keyword);
-        Page<Video> videoPage = videoRepository.searchVisibleVideos(authorId, visibleStatus, normalizedKeyword, pageable);
+        Page<Video> videoPage = videoRepository.searchVisibleVideos(
+                authorId,
+                visibleStatus,
+                visibleVisibility,
+                normalizedKeyword,
+                pageable
+        );
 
         return videoPage.map(video -> new VideoSummaryResponse(
                 video.getId(),
                 video.getTitle(),
                 video.getStatus(),
+                video.getVisibilityOrDefault(),
                 createAccountSummary(video.getAuthor()),
                 video.getCreatedAt()
         ));

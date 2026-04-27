@@ -2,6 +2,7 @@ package com.zyoutube.feature.video.model.entity;
 
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.video.model.type.VideoStatus;
+import com.zyoutube.feature.video.model.type.VideoVisibility;
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.Column;
@@ -31,7 +32,7 @@ import lombok.Setter;
         name = "videos",
         indexes = {
                 @Index(name = "idx_videos_author_id", columnList = "author_id"),
-                @Index(name = "idx_videos_status_created_at", columnList = "status, created_at")
+            @Index(name = "idx_videos_status_visibility_created_at", columnList = "status, visibility, created_at")
         }
 )
 @Getter
@@ -58,6 +59,10 @@ public class Video {
     @Column(nullable = false, length = 20)
     private VideoStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private VideoVisibility visibility;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Setter(AccessLevel.NONE)
     private LocalDateTime createdAt;
@@ -82,6 +87,22 @@ public class Video {
         this.status = status;
     }
 
+    public void changeVisibility(VideoVisibility visibility) {
+        this.visibility = visibility;
+    }
+
+    public VideoVisibility getVisibilityOrDefault() {
+        if (this.visibility != null) {
+            return this.visibility;
+        }
+
+        return this.status == VideoStatus.PUBLISHED ? VideoVisibility.PUBLIC : VideoVisibility.PRIVATE;
+    }
+
+    public boolean isPubliclyVisible() {
+        return this.status == VideoStatus.PUBLISHED && getVisibilityOrDefault() == VideoVisibility.PUBLIC;
+    }
+
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -90,6 +111,9 @@ public class Video {
 
         if (this.status == null) {
             this.status = VideoStatus.DRAFT;
+        }
+        if (this.visibility == null) {
+            this.visibility = VideoVisibility.PRIVATE;
         }
     }
 
