@@ -5,6 +5,7 @@ import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.account.model.vo.AccountSummaryResponse;
 import com.zyoutube.feature.auth.context.CurrentUserProvider;
 import com.zyoutube.feature.video.model.dto.CreateVideoRequest;
+import com.zyoutube.feature.video.model.dto.UpdateVideoRequest;
 import com.zyoutube.feature.video.model.entity.Video;
 import com.zyoutube.feature.video.model.type.VideoStatus;
 import com.zyoutube.feature.video.model.type.VideoVisibility;
@@ -46,10 +47,18 @@ public class VideoService {
                 video.getTitle(),
                 video.getDescription(),
                 video.getStatus(),
-            video.getVisibilityOrDefault(),
+                video.getVisibilityOrDefault(),
                 createAccountSummary(video.getAuthor()),
                 video.getCreatedAt()
         );
+    }
+
+    private String normalizeEditableField(String value, String fieldName) {
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException(fieldName + " can not be blank");
+        }
+        return trimmed;
     }
 
     private Video getOwnedVideo(Long videoId) {
@@ -83,11 +92,19 @@ public class VideoService {
     }
 
     @Transactional
-    public VideoDetailResponse updateVideo(Long videoId, CreateVideoRequest req) {
+    public VideoDetailResponse updateVideo(Long videoId, UpdateVideoRequest req) {
+        if (req.getTitle() == null && req.getDescription() == null && req.getVisibility() == null) {
+            throw new IllegalArgumentException("At least one field must be provided");
+        }
+
         Video video = getOwnedVideo(videoId);
 
-        video.changeTitle(req.getTitle().trim());
-        video.changeDescription(req.getDescription().trim());
+        if (req.getTitle() != null) {
+            video.changeTitle(normalizeEditableField(req.getTitle(), "Title"));
+        }
+        if (req.getDescription() != null) {
+            video.changeDescription(normalizeEditableField(req.getDescription(), "Description"));
+        }
         if (req.getVisibility() != null) {
             video.changeVisibility(req.getVisibility());
         }
@@ -98,7 +115,15 @@ public class VideoService {
     @Transactional
     public VideoDetailResponse publishVideo(Long videoId) {
         Video video = getOwnedVideo(videoId);
-        video.changeStatus(VideoStatus.PUBLISHED);
+        video.publish();
+
+        return createVideoDetailResponse(video);
+    }
+
+    @Transactional
+    public VideoDetailResponse unpublishVideo(Long videoId) {
+        Video video = getOwnedVideo(videoId);
+        video.unpublish();
 
         return createVideoDetailResponse(video);
     }

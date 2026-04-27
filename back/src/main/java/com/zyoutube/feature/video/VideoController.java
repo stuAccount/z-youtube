@@ -2,6 +2,7 @@ package com.zyoutube.feature.video;
 
 import com.zyoutube.common.api.ApiResponse;
 import com.zyoutube.feature.video.model.dto.CreateVideoRequest;
+import com.zyoutube.feature.video.model.dto.UpdateVideoRequest;
 import com.zyoutube.feature.video.model.type.VideoStatus;
 import com.zyoutube.feature.video.model.type.VideoVisibility;
 import com.zyoutube.feature.video.model.vo.VideoDetailResponse;
@@ -37,8 +38,13 @@ public class VideoController {
         return ApiResponse.success(videoService.publishVideo(id));
     }
 
+    @PostMapping("{id}/unpublish")
+    public ApiResponse<VideoDetailResponse> unpublishVideo(@PathVariable Long id) {
+        return ApiResponse.success(videoService.unpublishVideo(id));
+    }
+
     @PatchMapping("{id}")
-    public ApiResponse<VideoDetailResponse> updateVideo(@PathVariable Long id, @Valid @RequestBody CreateVideoRequest req) {
+    public ApiResponse<VideoDetailResponse> updateVideo(@PathVariable Long id, @Valid @RequestBody UpdateVideoRequest req) {
         return ApiResponse.success(videoService.updateVideo(id, req));
     }
 

@@ -91,6 +91,26 @@ public class Video {
         this.visibility = visibility;
     }
 
+    public void publish() {
+        if (this.status == VideoStatus.ARCHIVED) {
+            throw new IllegalStateException("Archived video can not be published");
+        }
+        this.status = VideoStatus.PUBLISHED;
+        if (getVisibilityOrDefault() == VideoVisibility.PRIVATE) {
+            this.visibility = VideoVisibility.PUBLIC;
+        }
+    }
+
+    public void unpublish() {
+        if (this.status != VideoStatus.PUBLISHED) {
+            throw new IllegalStateException("Only published video can be unpublished");
+        }
+        this.status = VideoStatus.DRAFT;
+        if (getVisibilityOrDefault() == VideoVisibility.PUBLIC) {
+            this.visibility = VideoVisibility.PRIVATE;
+        }
+    }
+
     public VideoVisibility getVisibilityOrDefault() {
         if (this.visibility != null) {
             return this.visibility;
