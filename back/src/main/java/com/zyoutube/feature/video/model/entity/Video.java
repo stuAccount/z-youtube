@@ -71,6 +71,15 @@ public class Video {
     @Setter(AccessLevel.NONE)
     private LocalDateTime updatedAt;
 
+    @Column(name = "like_count", nullable = false)
+    private long likeCount;
+
+    @Column(name = "dislike_count", nullable = false)
+    private long dislikeCount;
+
+    @Column(name = "favorite_count", nullable = false)
+    private long favoriteCount;
+
     public void changeTitle(String title) {
         this.title = title;
     }
@@ -130,6 +139,36 @@ public class Video {
 
     public VideoVisibility getVisibilityOrDefault() {
         return this.visibility != null ? this.visibility : VideoVisibility.PRIVATE;
+    }
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
+
+    public void increaseDislikeCount() {
+        this.dislikeCount++;
+    }
+
+    public void decreaseDislikeCount() {
+        if (this.dislikeCount > 0) {
+            this.dislikeCount--;
+        }
+    }
+
+    public void increaseFavoriteCount() {
+        this.favoriteCount++;
+    }
+
+    public void decreaseFavoriteCount() {
+        if (this.favoriteCount > 0) {
+            this.favoriteCount--;
+        }
     }
 
     /**

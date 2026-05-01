@@ -30,7 +30,12 @@ class VideoAccessIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(get("/api/videos/{id}", videoId).session(authorSession))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(videoId.intValue()))
-                .andExpect(jsonPath("$.data.status").value("DRAFT"));
+                .andExpect(jsonPath("$.data.status").value("DRAFT"))
+                .andExpect(jsonPath("$.data.likeCount").value(0))
+                .andExpect(jsonPath("$.data.dislikeCount").value(0))
+                .andExpect(jsonPath("$.data.favoriteCount").value(0))
+                .andExpect(jsonPath("$.data.myReaction").doesNotExist())
+                .andExpect(jsonPath("$.data.favorited").value(false));
     }
 
     @Test
@@ -52,7 +57,9 @@ class VideoAccessIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(get("/api/videos/{id}", videoId).session(authorSession))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(videoId.intValue()))
-                .andExpect(jsonPath("$.data.visibility").value("PRIVATE"));
+                .andExpect(jsonPath("$.data.visibility").value("PRIVATE"))
+                .andExpect(jsonPath("$.data.myReaction").doesNotExist())
+                .andExpect(jsonPath("$.data.favorited").value(false));
     }
 
     @Test
@@ -63,7 +70,9 @@ class VideoAccessIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(get("/api/videos/{id}", videoId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(videoId.intValue()))
-                .andExpect(jsonPath("$.data.visibility").value("UNLISTED"));
+                .andExpect(jsonPath("$.data.visibility").value("UNLISTED"))
+                .andExpect(jsonPath("$.data.myReaction").doesNotExist())
+                .andExpect(jsonPath("$.data.favorited").value(false));
     }
 
     @Test

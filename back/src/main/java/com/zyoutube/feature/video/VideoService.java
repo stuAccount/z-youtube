@@ -1,6 +1,12 @@
 package com.zyoutube.feature.video;
 
 import com.zyoutube.common.exception.NotFoundException;
+import com.zyoutube.feature.engagement.EngagementService;
+import com.zyoutube.feature.engagement.VideoFavoriteRepository;
+import com.zyoutube.feature.engagement.VideoReactionRepository;
+import com.zyoutube.feature.engagement.model.entity.VideoFavorite;
+import com.zyoutube.feature.engagement.model.entity.VideoReaction;
+import com.zyoutube.feature.engagement.model.type.ReactionType;
 import com.zyoutube.feature.account.AccountFinder;
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.account.model.vo.AccountSummaryResponse;
@@ -28,6 +34,8 @@ public class VideoService {
     private final VideoRepository videoRepository;
     private final AccountFinder accountFinder;
     private final CommentRepository commentRepository;
+    private final VideoReactionRepository videoReactionRepository;
+    private final VideoFavoriteRepository videoFavoriteRepository;
     private final CurrentUserProvider currentUserProvider;
     private final VideoFinder videoFinder;
 
@@ -41,6 +49,18 @@ public class VideoService {
     }
 
     private VideoDetailResponse createVideoDetailResponse(Video video) {
+        Long currentAccountId = currentUserProvider.getCurrentAccountIdOrNull();
+        ReactionType myReaction = null;
+        boolean favorited = false;
+        if (currentAccountId != null) {
+            myReaction = videoReactionRepository.findByVideo_IdAndAccount_Id(video.getId(), currentAccountId)
+                    .map(VideoReaction::getReactionType)
+                    .orElse(null);
+            favorited = videoFavoriteRepository.findByVideo_IdAndAccount_Id(video.getId(), currentAccountId)
+                    .map(VideoFavorite::getId)
+                    .isPresent();
+        }
+
         return new VideoDetailResponse(
                 video.getId(),
                 video.getTitle(),
@@ -48,7 +68,12 @@ public class VideoService {
                 video.getStatus(),
                 video.getVisibilityOrDefault(),
                 createAccountSummary(video.getAuthor()),
-                video.getCreatedAt()
+                video.getCreatedAt(),
+                video.getLikeCount(),
+                video.getDislikeCount(),
+                video.getFavoriteCount(),
+                myReaction,
+                favorited
         );
     }
 
@@ -236,6 +261,8 @@ public class VideoService {
         Video video = videoFinder.getOwnedVideo(videoId);
 
         commentRepository.deleteAllByVideo_Id(videoId);
+        videoReactionRepository.deleteAllByVideo_Id(videoId);
+        videoFavoriteRepository.deleteAllByVideo_Id(videoId);
 
         videoRepository.delete(video);
     }
