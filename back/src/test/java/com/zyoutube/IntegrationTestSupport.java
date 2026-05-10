@@ -3,6 +3,8 @@ package com.zyoutube;
 import com.jayway.jsonpath.JsonPath;
 import com.zyoutube.feature.account.AccountRepository;
 import com.zyoutube.feature.comment.CommentRepository;
+import com.zyoutube.feature.engagement.VideoFavoriteRepository;
+import com.zyoutube.feature.engagement.VideoReactionRepository;
 import com.zyoutube.feature.video.VideoRepository;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -34,8 +36,16 @@ abstract class IntegrationTestSupport {
     @Autowired
     protected CommentRepository commentRepository;
 
+    @Autowired
+    protected VideoReactionRepository videoReactionRepository;
+
+    @Autowired
+    protected VideoFavoriteRepository videoFavoriteRepository;
+
     @AfterEach
     void cleanupDatabase() {
+        videoReactionRepository.deleteAllInBatch();
+        videoFavoriteRepository.deleteAllInBatch();
         commentRepository.deleteAllInBatch();
         videoRepository.deleteAllInBatch();
         accountRepository.deleteAllInBatch();
@@ -129,6 +139,36 @@ abstract class IntegrationTestSupport {
                 .andReturn();
 
         return readLong(result, "$.data.id");
+    }
+
+    protected MvcResult setReaction(MockHttpSession session, Long videoId, String reactionType) throws Exception {
+        return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/videos/{id}/reaction", videoId)
+                        .session(session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "type": "%s"
+                                }
+                                """.formatted(reactionType)))
+                .andReturn();
+    }
+
+    protected MvcResult clearReaction(MockHttpSession session, Long videoId) throws Exception {
+        return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/videos/{id}/reaction", videoId)
+                        .session(session))
+                .andReturn();
+    }
+
+    protected MvcResult addFavorite(MockHttpSession session, Long videoId) throws Exception {
+        return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/videos/{id}/favorite", videoId)
+                        .session(session))
+                .andReturn();
+    }
+
+    protected MvcResult removeFavorite(MockHttpSession session, Long videoId) throws Exception {
+        return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/videos/{id}/favorite", videoId)
+                        .session(session))
+                .andReturn();
     }
 
     protected List<Integer> readIntList(MvcResult result, String path) throws Exception {
