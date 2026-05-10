@@ -14,10 +14,13 @@ public class VideoDetailResponse {
     private Long id;
     private String title;
     private String description;
+    private String videoUrl;
+    private String coverUrl;
     private VideoStatus status;
     private VideoVisibility visibility;
     private AccountSummaryResponse author;
     private LocalDateTime createdAt;
+    private long viewCount;
     private long likeCount;
     private long dislikeCount;
     private long favoriteCount;

@@ -53,6 +53,11 @@ public class VideoController {
         return ApiResponse.success(videoService.getVideoDetail(id));
     }
 
+    @PostMapping("{id}/view")
+    public ApiResponse<VideoViewCountResponse> recordView(@PathVariable Long id) {
+        return ApiResponse.success(videoService.recordView(id));
+    }
+
     @GetMapping
     public ApiResponse<Page<PublicVideoSummaryResponse>> getVideos(@RequestParam(required = false) Long authorId,
                                                                    @RequestParam(required = false) VideoStatus status,

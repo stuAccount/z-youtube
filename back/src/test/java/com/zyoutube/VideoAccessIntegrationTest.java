@@ -31,6 +31,9 @@ class VideoAccessIntegrationTest extends IntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(videoId.intValue()))
                 .andExpect(jsonPath("$.data.status").value("DRAFT"))
+                .andExpect(jsonPath("$.data.videoUrl").exists())
+                .andExpect(jsonPath("$.data.coverUrl").doesNotExist())
+                .andExpect(jsonPath("$.data.viewCount").value(0))
                 .andExpect(jsonPath("$.data.likeCount").value(0))
                 .andExpect(jsonPath("$.data.dislikeCount").value(0))
                 .andExpect(jsonPath("$.data.favoriteCount").value(0))
@@ -58,6 +61,7 @@ class VideoAccessIntegrationTest extends IntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(videoId.intValue()))
                 .andExpect(jsonPath("$.data.visibility").value("PRIVATE"))
+                .andExpect(jsonPath("$.data.videoUrl").exists())
                 .andExpect(jsonPath("$.data.myReaction").doesNotExist())
                 .andExpect(jsonPath("$.data.favorited").value(false));
     }
@@ -71,6 +75,7 @@ class VideoAccessIntegrationTest extends IntegrationTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(videoId.intValue()))
                 .andExpect(jsonPath("$.data.visibility").value("UNLISTED"))
+                .andExpect(jsonPath("$.data.videoUrl").exists())
                 .andExpect(jsonPath("$.data.myReaction").doesNotExist())
                 .andExpect(jsonPath("$.data.favorited").value(false));
     }
@@ -85,6 +90,7 @@ class VideoAccessIntegrationTest extends IntegrationTestSupport {
 
         MvcResult result = mockMvc.perform(get("/api/videos"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].videoUrl").exists())
                 .andReturn();
 
         List<Integer> ids = readIntList(result, "$.data.content[*].id");

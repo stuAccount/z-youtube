@@ -97,6 +97,16 @@ abstract class IntegrationTestSupport {
     }
 
     protected Long createVideo(MockHttpSession session, String title, String description, String visibility) throws Exception {
+        return createVideo(session, title, description, visibility, "https://cdn.example.com/" + title.hashCode() + ".mp4", null);
+    }
+
+    protected Long createVideo(MockHttpSession session,
+                               String title,
+                               String description,
+                               String visibility,
+                               String videoUrl,
+                               String coverUrl) throws Exception {
+        String coverUrlJson = coverUrl == null ? "null" : "\"" + coverUrl + "\"";
         MvcResult result = mockMvc.perform(post("/api/videos")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -104,9 +114,11 @@ abstract class IntegrationTestSupport {
                                 {
                                   "title": "%s",
                                   "description": "%s",
+                                  "videoUrl": "%s",
+                                  "coverUrl": %s,
                                   "visibility": "%s"
                                 }
-                                """.formatted(title, description, visibility)))
+                                """.formatted(title, description, videoUrl, coverUrlJson, visibility)))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -116,6 +128,17 @@ abstract class IntegrationTestSupport {
     protected Long createPublishedVideo(MockHttpSession session, String title, String description, String visibility)
             throws Exception {
         Long videoId = createVideo(session, title, description, visibility);
+        publishVideo(session, videoId);
+        return videoId;
+    }
+
+    protected Long createPublishedVideo(MockHttpSession session,
+                                        String title,
+                                        String description,
+                                        String visibility,
+                                        String videoUrl,
+                                        String coverUrl) throws Exception {
+        Long videoId = createVideo(session, title, description, visibility, videoUrl, coverUrl);
         publishVideo(session, videoId);
         return videoId;
     }
@@ -139,6 +162,16 @@ abstract class IntegrationTestSupport {
                 .andReturn();
 
         return readLong(result, "$.data.id");
+    }
+
+    protected MvcResult recordView(Long videoId) throws Exception {
+        return mockMvc.perform(post("/api/videos/{id}/view", videoId))
+                .andReturn();
+    }
+
+    protected MvcResult recordView(MockHttpSession session, Long videoId) throws Exception {
+        return mockMvc.perform(post("/api/videos/{id}/view", videoId).session(session))
+                .andReturn();
     }
 
     protected MvcResult setReaction(MockHttpSession session, Long videoId, String reactionType) throws Exception {

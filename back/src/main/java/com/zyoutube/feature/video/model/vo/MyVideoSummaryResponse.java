@@ -11,6 +11,8 @@ import lombok.Getter;
 public class MyVideoSummaryResponse {
     private Long id;
     private String title;
+    private String videoUrl;
+    private String coverUrl;
     private VideoStatus status;
     private VideoVisibility visibility;
     private LocalDateTime createdAt;

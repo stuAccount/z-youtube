@@ -24,7 +24,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(HttpMethod.GET, "/api/accounts/profile/*").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/videos", "/api/videos/*").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/feed/latest").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/videos/*/view").permitAll()
                     .requestMatchers(HttpMethod.GET, "/ping").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/accounts/register").permitAll()

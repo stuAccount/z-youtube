@@ -51,6 +51,12 @@ public class Video {
     @Column(nullable = false, length = 5000)
     private String description;
 
+    @Column(name = "video_url", nullable = false, length = 1000)
+    private String videoUrl;
+
+    @Column(name = "cover_url", length = 1000)
+    private String coverUrl;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_id", nullable = false, foreignKey = @ForeignKey(name = "fk_videos_author"))
     private Account author;
@@ -80,6 +86,9 @@ public class Video {
     @Column(name = "favorite_count", nullable = false)
     private long favoriteCount;
 
+    @Column(name = "view_count", nullable = false)
+    private long viewCount;
+
     public void changeTitle(String title) {
         this.title = title;
     }
@@ -90,6 +99,14 @@ public class Video {
 
     public void assignAuthor(Account author) {
         this.author = author;
+    }
+
+    public void changeVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
+    }
+
+    public void changeCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
     }
 
     public void changeStatus(VideoStatus status) {
@@ -169,6 +186,10 @@ public class Video {
         if (this.favoriteCount > 0) {
             this.favoriteCount--;
         }
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
     }
 
     /**

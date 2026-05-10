@@ -1,7 +1,6 @@
 package com.zyoutube.feature.video;
 
 import com.zyoutube.common.exception.NotFoundException;
-import com.zyoutube.feature.engagement.EngagementService;
 import com.zyoutube.feature.engagement.VideoFavoriteRepository;
 import com.zyoutube.feature.engagement.VideoReactionRepository;
 import com.zyoutube.feature.engagement.model.entity.VideoFavorite;
@@ -38,6 +37,7 @@ public class VideoService {
     private final VideoFavoriteRepository videoFavoriteRepository;
     private final CurrentUserProvider currentUserProvider;
     private final VideoFinder videoFinder;
+    private final ViewCountService viewCountService;
 
     private AccountSummaryResponse createAccountSummary(Account author) {
         return new AccountSummaryResponse(
@@ -65,10 +65,13 @@ public class VideoService {
                 video.getId(),
                 video.getTitle(),
                 video.getDescription(),
+                video.getVideoUrl(),
+                video.getCoverUrl(),
                 video.getStatus(),
                 video.getVisibilityOrDefault(),
                 createAccountSummary(video.getAuthor()),
                 video.getCreatedAt(),
+                video.getViewCount(),
                 video.getLikeCount(),
                 video.getDislikeCount(),
                 video.getFavoriteCount(),
@@ -81,6 +84,8 @@ public class VideoService {
         return new PublicVideoSummaryResponse(
                 video.getId(),
                 video.getTitle(),
+                video.getVideoUrl(),
+                video.getCoverUrl(),
                 video.getStatus(),
                 video.getVisibilityOrDefault(),
                 createAccountSummary(video.getAuthor()),
@@ -92,6 +97,8 @@ public class VideoService {
         return new MyVideoSummaryResponse(
                 video.getId(),
                 video.getTitle(),
+                video.getVideoUrl(),
+                video.getCoverUrl(),
                 video.getStatus(),
                 video.getVisibilityOrDefault(),
                 video.getCreatedAt(),
@@ -138,6 +145,8 @@ public class VideoService {
         video.assignAuthor(author);
         video.changeTitle(req.getTitle().trim());
         video.changeDescription(req.getDescription().trim());
+        video.changeVideoUrl(req.getVideoUrl().trim());
+        video.changeCoverUrl(normalizeOptionalUrl(req.getCoverUrl()));
         video.changeStatus(VideoStatus.DRAFT);
         video.changeVisibility(req.getVisibility() != null ? req.getVisibility() : VideoVisibility.PRIVATE);
 
@@ -147,7 +156,11 @@ public class VideoService {
 
     @Transactional
     public VideoDetailResponse updateVideo(Long videoId, UpdateVideoRequest req) {
-        if (req.getTitle() == null && req.getDescription() == null && req.getVisibility() == null) {
+        if (req.getTitle() == null
+                && req.getDescription() == null
+                && req.getVisibility() == null
+                && req.getVideoUrl() == null
+                && req.getCoverUrl() == null) {
             throw new IllegalArgumentException("At least one field must be provided");
         }
 
@@ -158,6 +171,12 @@ public class VideoService {
         }
         if (req.getDescription() != null) {
             video.changeDescription(normalizeEditableField(req.getDescription(), "Description"));
+        }
+        if (req.getVideoUrl() != null) {
+            video.changeVideoUrl(normalizeEditableField(req.getVideoUrl(), "Video url"));
+        }
+        if (req.getCoverUrl() != null) {
+            video.changeCoverUrl(normalizeOptionalUrl(req.getCoverUrl()));
         }
         if (req.getVisibility() != null) {
             video.changeVisibility(req.getVisibility());
@@ -193,6 +212,19 @@ public class VideoService {
             throw new NotFoundException("Video not found");
         }
         return createVideoDetailResponse(video);
+    }
+
+    @Transactional
+    public VideoViewCountResponse recordView(Long videoId) {
+        Video video = videoFinder.findVideo(videoId);
+
+        Long viewerId = currentUserProvider.getCurrentAccountIdOrNull();
+        if (!VideoAccessPolicy.canViewDetail(video, viewerId)) {
+            throw new NotFoundException("Video not found");
+        }
+
+        long viewCount = viewCountService.recordView(videoId);
+        return new VideoViewCountResponse(videoId, viewCount);
     }
 
     @Transactional(readOnly = true)
@@ -231,6 +263,11 @@ public class VideoService {
     }
 
     @Transactional(readOnly = true)
+    public Page<PublicVideoSummaryResponse> getLatestFeed(int page, int size) {
+        return getVideos(null, VideoStatus.PUBLISHED, VideoVisibility.PUBLIC, null, page, size);
+    }
+
+    @Transactional(readOnly = true)
     public Page<MyVideoSummaryResponse> getMyVideos(VideoStatus status,
                                                     VideoVisibility visibility,
                                                     String keyword,
@@ -265,5 +302,14 @@ public class VideoService {
         videoFavoriteRepository.deleteAllByVideo_Id(videoId);
 
         videoRepository.delete(video);
+    }
+
+    private String normalizeOptionalUrl(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

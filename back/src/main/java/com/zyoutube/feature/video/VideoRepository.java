@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -54,4 +55,18 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
                                   @Param("visibility") VideoVisibility visibility,
                                   @Param("keyword") String keyword,
                                   Pageable pageable);
+
+    @Modifying
+    @Query("""
+            update Video v
+            set v.viewCount = v.viewCount + 1
+            where v.id = :videoId
+            """)
+    int incrementViewCount(@Param("videoId") Long videoId);
+
+    @Query("""
+            select v.viewCount from Video v
+            where v.id = :videoId
+            """)
+    Optional<Long> findViewCountById(@Param("videoId") Long videoId);
 }
