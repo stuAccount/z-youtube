@@ -1,9 +1,10 @@
-package com.zyoutube.feature.video;
+package com.zyoutube.feature.video.controller;
 
 import com.zyoutube.common.api.ApiResponse;
 import com.zyoutube.feature.video.model.type.VideoStatus;
 import com.zyoutube.feature.video.model.type.VideoVisibility;
 import com.zyoutube.feature.video.model.vo.MyVideoSummaryResponse;
+import com.zyoutube.feature.video.service.VideoService;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
