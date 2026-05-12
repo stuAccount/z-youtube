@@ -78,7 +78,7 @@ This repo is best used to keep improving content-platform backend skills:
 
 ## Recommended Next Work
 
-### Engineering cleanup
+### Engineering cleanup (Completed)
 
 - add authentication-specific exception handling instead of falling back to `500`
 - fix the login response field mapping issue
@@ -87,7 +87,7 @@ This repo is best used to keep improving content-platform backend skills:
 - define and implement `UNLISTED` visibility behavior
 - add core integration tests for `auth`, `account`, `video`, and `comment`
 
-### Minimal MVP features
+### Minimal MVP features (Completed)
 
 - creator-side listing for my videos
 - draft/private video detail for the owner
@@ -96,7 +96,7 @@ This repo is best used to keep improving content-platform backend skills:
 - latest feed based on the existing public video listing
 - media fields such as `videoUrl` and `coverUrl`
 
-### Good middleware practice in this repo
+### Good middleware practice in this repo (TBC)
 
 - Redis leaderboard
 - hot video cache
