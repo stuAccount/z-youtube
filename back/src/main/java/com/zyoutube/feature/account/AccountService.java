@@ -6,6 +6,8 @@ import com.zyoutube.feature.account.model.vo.SelfProfileResponse;
 import com.zyoutube.feature.account.model.dto.RegisterAccountRequest;
 import com.zyoutube.feature.account.model.dto.UpdateProfileRequest;
 import com.zyoutube.feature.account.model.entity.Account;
+import com.zyoutube.feature.auth.context.CurrentUserProvider;
+import com.zyoutube.feature.subscription.service.AccountSubscriptionService;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,15 +20,21 @@ public class AccountService {
     private final EntityManager entityManager;
     private final PasswordEncoder passwordEncoder;
     private final AccountFinder accountFinder;
+    private final CurrentUserProvider currentUserProvider;
+    private final AccountSubscriptionService accountSubscriptionService;
 
     public AccountService(AccountRepository accountRepository,
                           EntityManager entityManager,
                           PasswordEncoder passwordEncoder,
-                          AccountFinder accountFinder) {
+                          AccountFinder accountFinder,
+                          CurrentUserProvider currentUserProvider,
+                          AccountSubscriptionService accountSubscriptionService) {
         this.accountRepository = accountRepository;
         this.entityManager = entityManager;
         this.passwordEncoder = passwordEncoder;
         this.accountFinder = accountFinder;
+        this.currentUserProvider = currentUserProvider;
+        this.accountSubscriptionService = accountSubscriptionService;
     }
 
     private SelfProfileResponse toSelfProfileResponse(Account account) {
@@ -35,8 +43,10 @@ public class AccountService {
                 account.getUsername(),
                 account.getEmail(),
                 account.getNickname(),
+                account.getAvatarUrl(),
                 account.getBio(),
-                account.getAvatarUrl()
+                accountSubscriptionService.countSubscribers(account.getId()),
+                accountSubscriptionService.countSubscriptions(account.getId())
         );
     }
 
@@ -53,8 +63,7 @@ public class AccountService {
         account.changeEmail(req.getEmail());
         account.updatePassword(passwordEncoder.encode(req.getPassword()));
         entityManager.persist(account);
-        return new SelfProfileResponse(account.getId(), account.getUsername(), account.getEmail(),
-                account.getNickname(), account.getBio(), account.getAvatarUrl());
+        return toSelfProfileResponse(account);
     }
 
     
@@ -73,15 +82,22 @@ public class AccountService {
     }
 
     public PublicProfileResponse getPublicProfile(String username) {
-        Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found!"));
+        Account account = accountFinder.findActiveAccountByUsername(username);
+        Long currentAccountId = currentUserProvider.getCurrentAccountIdOrNull();
+        boolean subscribedByCurrentUser = currentAccountId != null
+                && !currentAccountId.equals(account.getId())
+                && accountSubscriptionService.isSubscribed(currentAccountId, account.getId());
 
-        if (account.isDeleted()) {
-            throw new IllegalArgumentException("Account not found!");
-        }
-
-        return new PublicProfileResponse(account.getId(), account.getUsername(),
-                account.getNickname(), account.getBio(), account.getAvatarUrl());   
+        return new PublicProfileResponse(
+                account.getId(),
+                account.getUsername(),
+                account.getNickname(),
+                account.getAvatarUrl(),
+                account.getBio(),
+                accountSubscriptionService.countSubscribers(account.getId()),
+                accountSubscriptionService.countSubscriptions(account.getId()),
+                subscribedByCurrentUser
+        );
     }
 
     @Transactional

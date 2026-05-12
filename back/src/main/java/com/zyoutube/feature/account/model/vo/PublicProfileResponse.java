@@ -11,4 +11,7 @@ public class PublicProfileResponse {
     private String nickname;
     private String avatarUrl;
     private String bio;
+    private long subscriberCount;
+    private long subscriptionCount;
+    private boolean subscribedByCurrentUser;
 }

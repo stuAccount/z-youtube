@@ -11,4 +11,6 @@ public class SelfProfileResponse {
     private String nickname;
     private String avatarUrl;
     private String bio;
+    private long subscriberCount;
+    private long subscriptionCount;
 }

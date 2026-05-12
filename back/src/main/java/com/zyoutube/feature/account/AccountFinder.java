@@ -24,6 +24,23 @@ public class AccountFinder {
                 .orElseThrow(() -> new NotFoundException("Account not found"));
     }
 
+    public Account findActiveAccount(Long accountId) {
+        Account account = findAccount(accountId);
+        if (account.isDeleted()) {
+            throw new NotFoundException("Account not found");
+        }
+        return account;
+    }
+
+    public Account findActiveAccountByUsername(String username) {
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Account not found"));
+        if (account.isDeleted()) {
+            throw new NotFoundException("Account not found");
+        }
+        return account;
+    }
+
     /**
      * 获取当前登录用户的账户信息
      * 
@@ -31,6 +48,6 @@ public class AccountFinder {
      * @throws NotFoundException 如果当前用户ID对应的账户不存在
      */
     public Account getCurrentAccount() {
-        return findAccount(currentUserProvider.getCurrentAccountId());
+        return findActiveAccount(currentUserProvider.getCurrentAccountId());
     }
 }
