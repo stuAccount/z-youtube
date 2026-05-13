@@ -28,15 +28,23 @@ This repository is no longer just a scaffold. It is a usable base for continuing
 
 ## Run
 
-Start MySQL:
+Start the full stack with Docker Compose:
 
 ```bash
-docker compose up -d
+docker compose up --build
 ```
 
-Start the backend:
+Services:
+
+- frontend: `http://localhost:5173`
+- backend: `http://localhost:6969`
+- mysql: `localhost:3306`
+- redis: `localhost:6379`
+
+For backend-only local development, you can still start infrastructure with Compose and run Spring Boot manually:
 
 ```bash
+docker compose up -d mysql redis
 cd back
 ./mvnw spring-boot:run
 ```
@@ -48,6 +56,7 @@ Default local setup:
 - database: `zyoutube`
 - username: `root`
 - password: `root`
+- Redis: `localhost:6379`
 
 Health check:
 

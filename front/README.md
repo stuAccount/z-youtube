@@ -9,13 +9,17 @@ npm install
 cp .env.example .env
 ```
 
-Set the backend origin in `.env`:
+For local development, leave `VITE_API_BASE_URL` empty so Vite proxies API requests to the backend running on the same remote machine:
 
 ```bash
-VITE_API_BASE_URL=http://your-server-host:6969
+VITE_API_BASE_URL=
 ```
 
-If `VITE_API_BASE_URL` is empty, requests use the same origin as the frontend.
+The dev server proxies `/api` and `/ping` to `http://localhost:6969`.
+
+Only set `VITE_API_BASE_URL` when you intentionally want the browser to call a different backend origin directly.
+
+For containerized deployment, the production frontend is served by Nginx and proxies `/api` and `/ping` to the backend container.
 
 ## Scripts
 

@@ -1,6 +1,8 @@
 import type { ApiResponse } from "./types";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
+const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
+export const API_BASE_URL = configuredBaseUrl ? configuredBaseUrl.replace(/\/$/, "") : "";
 
 export class ApiError extends Error {
   status: number;

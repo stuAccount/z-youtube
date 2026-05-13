@@ -7,6 +7,7 @@ import type { CommentSummary, Page, VideoDetail } from "../api/types";
 import { EmptyState, ErrorState, LoadingState } from "../components/StateViews";
 import { useAuth } from "../context/AuthContext";
 import { compactNumber, errorMessage, formatDate, initials } from "../utils/format";
+import { toPlatformEmbedUrl } from "../utils/video";
 
 export function VideoPage() {
   const { id } = useParams();
@@ -96,11 +97,23 @@ export function VideoPage() {
   if (error) return <ErrorState message={error} />;
   if (!video) return <EmptyState title="没有找到视频" />;
 
+  const embedUrl = toPlatformEmbedUrl(video.videoUrl);
+
   return (
     <section className="watch-layout">
       <div className="watch-main">
         <div className="player-shell">
-          <video src={video.videoUrl} poster={video.coverUrl ?? undefined} controls playsInline />
+          {embedUrl ? (
+            <iframe
+              src={embedUrl}
+              title={video.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          ) : (
+            <video src={video.videoUrl} poster={video.coverUrl ?? undefined} controls playsInline />
+          )}
         </div>
         <h1>{video.title}</h1>
         <div className="watch-stats">
