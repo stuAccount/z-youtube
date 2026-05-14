@@ -4,7 +4,7 @@ import com.zyoutube.common.exception.NotFoundException;
 import com.zyoutube.feature.account.AccountFinder;
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.account.model.vo.AccountSummaryResponse;
-import com.zyoutube.feature.auth.context.CurrentUserProvider;
+import com.zyoutube.common.context.CurrentUserProvider;
 import com.zyoutube.feature.engagement.model.entity.VideoFavorite;
 import com.zyoutube.feature.engagement.model.entity.VideoReaction;
 import com.zyoutube.feature.engagement.model.type.ReactionType;

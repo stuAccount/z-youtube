@@ -6,7 +6,7 @@ import com.zyoutube.feature.comment.CommentRepository;
 import com.zyoutube.feature.engagement.VideoFavoriteRepository;
 import com.zyoutube.feature.engagement.VideoReactionRepository;
 import com.zyoutube.feature.subscription.AccountSubscriptionRepository;
-import com.zyoutube.feature.video.VideoRepository;
+import com.zyoutube.feature.video.dao.mysql.VideoRepository;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;

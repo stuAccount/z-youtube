@@ -3,7 +3,7 @@ package com.zyoutube.feature.auth;
 import com.zyoutube.common.exception.UnauthorizedException;
 import com.zyoutube.feature.account.AccountRepository;
 import com.zyoutube.feature.account.model.entity.Account;
-import com.zyoutube.feature.auth.context.CurrentUserProvider;
+import com.zyoutube.common.context.CurrentUserProvider;
 import com.zyoutube.feature.auth.model.dto.LoginRequest;
 import com.zyoutube.feature.auth.model.vo.CurrentAccountResponse;
 import com.zyoutube.feature.auth.model.vo.LoginResponse;
@@ -20,9 +20,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
-/**
- * TODO Sprint 7: authentication application service.
- */
 @Service
 public class AuthService {
     private final AuthenticationManager authenticationManager;

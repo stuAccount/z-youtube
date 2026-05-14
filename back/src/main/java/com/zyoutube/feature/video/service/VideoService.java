@@ -9,12 +9,11 @@ import com.zyoutube.feature.engagement.model.type.ReactionType;
 import com.zyoutube.feature.account.AccountFinder;
 import com.zyoutube.feature.account.model.entity.Account;
 import com.zyoutube.feature.account.model.vo.AccountSummaryResponse;
-import com.zyoutube.feature.auth.context.CurrentUserProvider;
+import com.zyoutube.common.context.CurrentUserProvider;
 import com.zyoutube.feature.comment.CommentRepository;
 import com.zyoutube.feature.video.VideoAccessPolicy;
 import com.zyoutube.feature.video.VideoFinder;
-import com.zyoutube.feature.video.VideoRepository;
-import com.zyoutube.feature.video.model.vo.VideoViewCountResponse;
+import com.zyoutube.feature.video.dao.mysql.VideoRepository;
 import com.zyoutube.feature.video.model.dto.CreateVideoRequest;
 import com.zyoutube.feature.video.model.dto.UpdateVideoRequest;
 import com.zyoutube.feature.video.model.entity.Video;
@@ -41,6 +40,7 @@ public class VideoService {
     private final VideoFavoriteRepository videoFavoriteRepository;
     private final CurrentUserProvider currentUserProvider;
     private final VideoFinder videoFinder;
+    private final ViewCountService viewCountService;
 
     private AccountSummaryResponse createAccountSummary(Account author) {
         return new AccountSummaryResponse(
@@ -51,7 +51,7 @@ public class VideoService {
         );
     }
 
-    private VideoDetailResponse createVideoDetailResponse(Video video) {
+    private VideoDetailResponse createVideoDetailResponse(Video video, long viewCount) {
         Long currentAccountId = currentUserProvider.getCurrentAccountIdOrNull();
         ReactionType myReaction = null;
         boolean favorited = false;
@@ -74,7 +74,7 @@ public class VideoService {
                 video.getVisibilityOrDefault(),
                 createAccountSummary(video.getAuthor()),
                 video.getCreatedAt(),
-                video.getViewCount(),
+                viewCount,
                 video.getLikeCount(),
                 video.getDislikeCount(),
                 video.getFavoriteCount(),
@@ -154,7 +154,7 @@ public class VideoService {
         video.changeVisibility(req.getVisibility() != null ? req.getVisibility() : VideoVisibility.PRIVATE);
 
         Video savedVideo = videoRepository.save(video);
-        return createVideoDetailResponse(savedVideo);
+        return createVideoDetailResponse(savedVideo, 0);
     }
 
     @Transactional
@@ -185,7 +185,9 @@ public class VideoService {
             video.changeVisibility(req.getVisibility());
         }
 
-        return createVideoDetailResponse(video);
+        
+
+        return createVideoDetailResponse(video, viewCountService.getViewCount(videoId));
     }
 
     @Transactional
@@ -193,7 +195,7 @@ public class VideoService {
         Video video = videoFinder.getOwnedVideo(videoId);
         video.publish();
 
-        return createVideoDetailResponse(video);
+        return createVideoDetailResponse(video, viewCountService.getViewCount(videoId));
     }
 
     @Transactional
@@ -201,7 +203,7 @@ public class VideoService {
         Video video = videoFinder.getOwnedVideo(videoId);
         video.unpublish();
 
-        return createVideoDetailResponse(video);
+        return createVideoDetailResponse(video, viewCountService.getViewCount(videoId));
     }
 
 
@@ -214,7 +216,7 @@ public class VideoService {
             // Throw 404 Not Found instead of 403 Forbidden or 401 Unauthorized to avoid leaking the existence of the video
             throw new NotFoundException("Video not found");
         }
-        return createVideoDetailResponse(video);
+        return createVideoDetailResponse(video, viewCountService.getViewCount(videoId));
     }
 
 

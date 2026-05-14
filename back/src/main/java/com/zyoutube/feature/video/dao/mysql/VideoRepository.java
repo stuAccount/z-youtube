@@ -1,4 +1,4 @@
-package com.zyoutube.feature.video;
+package com.zyoutube.feature.video.dao.mysql;
 
 import com.zyoutube.feature.video.model.entity.Video;
 import com.zyoutube.feature.video.model.type.VideoStatus;
@@ -63,6 +63,15 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
             where v.id = :videoId
             """)
     int incrementViewCount(@Param("videoId") Long videoId);
+
+    @Modifying
+    @Query("""
+            update Video v
+            set v.viewCount = :viewCount
+            where v.id = :videoId
+            """)
+    // 注意：这里是用 Redis 当前总量直接替换数据库值，不是做数据库增量累加。
+    int replaceViewCount(@Param("videoId") Long videoId, @Param("viewCount") long viewCount);
 
     @Query("""
             select v.viewCount from Video v

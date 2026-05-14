@@ -9,7 +9,7 @@ import com.zyoutube.feature.video.model.type.VideoVisibility;
 import com.zyoutube.feature.video.model.vo.VideoDetailResponse;
 import com.zyoutube.feature.video.model.vo.PublicVideoSummaryResponse;
 import com.zyoutube.feature.video.service.VideoService;
-import com.zyoutube.feature.video.service.impl.DBDirectViewCountService;
+import com.zyoutube.feature.video.service.impl.ViewCountServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,11 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/videos")
 public class VideoController {
     private final VideoService videoService;
-    private final DBDirectViewCountService dbDirectViewCountService;
+    private final ViewCountServiceImpl viewCountServiceImpl;
 
-    public VideoController(VideoService videoService, DBDirectViewCountService dbDirectViewCountService) {
+    public VideoController(VideoService videoService, ViewCountServiceImpl viewCountServiceImpl) {
         this.videoService = videoService;
-        this.dbDirectViewCountService = dbDirectViewCountService;
+        this.viewCountServiceImpl = viewCountServiceImpl;
     }
 
     @PostMapping
@@ -60,7 +60,7 @@ public class VideoController {
 
     @PostMapping("{id}/view")
     public ApiResponse<VideoViewCountResponse> recordView(@PathVariable Long id) {
-        return ApiResponse.success(dbDirectViewCountService.recordView(id));
+        return ApiResponse.success(viewCountServiceImpl.recordView(id));
     }
 
     @GetMapping

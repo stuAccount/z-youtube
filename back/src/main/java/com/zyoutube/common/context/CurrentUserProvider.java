@@ -1,4 +1,4 @@
-package com.zyoutube.feature.auth.context;
+package com.zyoutube.common.context;
 
 import com.zyoutube.common.exception.UnauthorizedException;
 import com.zyoutube.feature.auth.security.AccountUserDetails;

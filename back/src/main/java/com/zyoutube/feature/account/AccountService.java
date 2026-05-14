@@ -6,7 +6,7 @@ import com.zyoutube.feature.account.model.vo.SelfProfileResponse;
 import com.zyoutube.feature.account.model.dto.RegisterAccountRequest;
 import com.zyoutube.feature.account.model.dto.UpdateProfileRequest;
 import com.zyoutube.feature.account.model.entity.Account;
-import com.zyoutube.feature.auth.context.CurrentUserProvider;
+import com.zyoutube.common.context.CurrentUserProvider;
 import com.zyoutube.feature.subscription.service.AccountSubscriptionService;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;

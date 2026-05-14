@@ -1,7 +1,8 @@
 package com.zyoutube.feature.video;
 
 import com.zyoutube.common.exception.NotFoundException;
-import com.zyoutube.feature.auth.context.CurrentUserProvider;
+import com.zyoutube.common.context.CurrentUserProvider;
+import com.zyoutube.feature.video.dao.mysql.VideoRepository;
 import com.zyoutube.feature.video.model.entity.Video;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

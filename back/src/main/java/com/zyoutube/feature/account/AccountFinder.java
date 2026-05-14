@@ -2,7 +2,7 @@ package com.zyoutube.feature.account;
 
 import com.zyoutube.common.exception.NotFoundException;
 import com.zyoutube.feature.account.model.entity.Account;
-import com.zyoutube.feature.auth.context.CurrentUserProvider;
+import com.zyoutube.common.context.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
