@@ -1,16 +1,17 @@
-package com.zyoutube.feature.video.dao.redis;
+package com.zyoutube.feature.video.dao.redis.Impl;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.AllArgsConstructor;
+import com.zyoutube.feature.video.dao.redis.ViewDedupDao;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
 @Component
-public class ViewDedupCacheImpl implements ViewDedupCache {
+public class ViewDedupCacheImpl implements ViewDedupDao {
     private static final String KEY_PREFIX = "video:view:dedup:";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
 

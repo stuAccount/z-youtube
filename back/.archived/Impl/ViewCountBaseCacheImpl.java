@@ -1,4 +1,4 @@
-package com.zyoutube.feature.video.dao.redis;
+package com.zyoutube.feature.video.dao.redis.Impl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -7,12 +7,13 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import com.zyoutube.feature.video.dao.redis.ViewBaseDao;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
 @Component
-public class ViewCountCacheImpl implements ViewCountCache {
+public class ViewCountBaseCacheImpl implements ViewBaseDao {
     private static final String KEY_PREFIX = "video:view:count:";
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -30,6 +31,16 @@ public class ViewCountCacheImpl implements ViewCountCache {
     @Override
     public Long increment(Long videoId) {
         return stringRedisTemplate.opsForValue().increment(buildKey(videoId));
+    }
+
+    @Override
+    public Long increment(Long videoId, long delta) {
+        return stringRedisTemplate.opsForValue().increment(buildKey(videoId), delta);
+    }
+
+    @Override
+    public Long increment(Long videoId, long delta) {
+        return stringRedisTemplate.opsForValue().increment(buildKey(videoId), delta);
     }
 
     @Override

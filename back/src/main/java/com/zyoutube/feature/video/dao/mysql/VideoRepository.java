@@ -59,23 +59,17 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
     @Modifying
     @Query("""
             update Video v
-            set v.viewCount = v.viewCount + 1
+            set v.viewCount = v.viewCount + :delta
             where v.id = :videoId
             """)
-    int incrementViewCount(@Param("videoId") Long videoId);
+    int incrementViewCountBy(@Param("videoId") Long videoId, @Param("delta") long delta);
 
-    @Modifying
-    @Query("""
-            update Video v
-            set v.viewCount = :viewCount
-            where v.id = :videoId
-            """)
-    // 注意：这里是用 Redis 当前总量直接替换数据库值，不是做数据库增量累加。
-    int replaceViewCount(@Param("videoId") Long videoId, @Param("viewCount") long viewCount);
 
     @Query("""
             select v.viewCount from Video v
             where v.id = :videoId
             """)
     Optional<Long> findViewCountById(@Param("videoId") Long videoId);
+
+
 }

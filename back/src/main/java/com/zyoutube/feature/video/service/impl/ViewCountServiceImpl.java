@@ -3,8 +3,7 @@ package com.zyoutube.feature.video.service.impl;
 import com.zyoutube.common.context.CurrentUserProvider;
 import com.zyoutube.common.context.RequestContextProvider;
 import com.zyoutube.feature.video.VideoAccessPolicy;
-import com.zyoutube.feature.video.dao.redis.ViewCountCache;
-import com.zyoutube.feature.video.dao.redis.ViewDedupCache;
+import com.zyoutube.feature.video.dao.redis.VideoViewRedisDao;
 import com.zyoutube.feature.video.model.entity.Video;
 import com.zyoutube.feature.video.model.vo.VideoViewCountResponse;
 import com.zyoutube.feature.video.service.ViewCountService;
@@ -21,8 +20,7 @@ public class ViewCountServiceImpl implements ViewCountService {
     private final VideoFinder videoFinder;
     private final RequestContextProvider requestContextProvider;
     private final CurrentUserProvider currentUserProvider;
-    private final ViewCountCache viewCountCache;
-    private final ViewDedupCache viewDedupCache;
+    private final VideoViewRedisDao videoViewRedisDao;
 
 
     @Override
@@ -53,11 +51,7 @@ public class ViewCountServiceImpl implements ViewCountService {
             viewerkey = "anon:" + ipHash + ":" + uaHash;
         }
 
-        boolean isFirstViewToday = viewDedupCache.tryMarkViewedToday(videoId, viewerkey);
-        if (isFirstViewToday) {
-            loadViewCountToCacheIfAbsent(videoId); // 加载基值,确保缓存里有这个视频的播放量数据?
-            viewCountCache.increment(videoId);
-        }
+        videoViewRedisDao.incrementDeltaAndMarkDirtyTx(videoId);
 
         return new VideoViewCountResponse(videoId, getViewCount(videoId)); // 直接从缓存里读最新的播放量返回给前端
     }
@@ -66,18 +60,18 @@ public class ViewCountServiceImpl implements ViewCountService {
     public long getViewCount(Long videoId) {
         // TODO: 后期可以引入布隆过滤器来解决缓存穿透问题，避免频繁访问数据库
 
-        // 先查缓存，如果缓存里面没有，再查数据库并更新缓存
-        Long cache = viewCountCache.get(videoId);
-        if (cache != null) {
-            return cache;
+        // 先从缓存里面读视频播放量的基准值，如果缓存里面没有，就从数据库里面读。并写到缓存层，然后再返回加上缓存里的增量的总量
+        Long base = videoViewRedisDao.getBase(videoId);
+        if (base != null) {
+            return base + videoViewRedisDao.getDelta(videoId);
         }
 
         Video video = videoFinder.findVideo(videoId);
-        long viewCount = video.getViewCount();
-        return (viewCountCache.setIfAbsent(videoId, viewCount)) ? viewCount : viewCountCache.get(videoId);
+        long dbBase = video.getViewCount();
+        if (videoViewRedisDao.setBaseIfAbsent(videoId, dbBase)) {
+            return dbBase + videoViewRedisDao.getDelta(videoId);
+        }
+        return videoViewRedisDao.getBase(videoId) + videoViewRedisDao.getDelta(videoId);
     }
 
-    public void loadViewCountToCacheIfAbsent(Long videoId) {
-        getViewCount(videoId);
-    }
 }

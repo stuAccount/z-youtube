@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.data.redis.RedisConnectionFailureException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -41,6 +42,12 @@ public class GlobalExceptionHandler {
                 .getFieldError()
                 .getDefaultMessage();
         return ApiResponse.fail(message);
+    }
+
+    @ExceptionHandler(RedisConnectionFailureException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ApiResponse<Void> handleRedisConnectionFailure(RedisConnectionFailureException e) {
+        return ApiResponse.fail("redis connection failed");
     }
 
     @ExceptionHandler(Exception.class)
